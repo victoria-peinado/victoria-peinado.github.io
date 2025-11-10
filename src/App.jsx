@@ -1,66 +1,6 @@
 import React, { useState } from 'react';
 import { HashRouter, Routes, Route, Link } from 'react-router-dom';
 
-// --- SVG Icons (re-using from LandingPage) ---
-const ZapIcon = () => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="24"
-    height="24"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className="w-8 h-8 text-blue-400"
-  >
-    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
-  </svg>
-);
-
-const UsersIcon = () => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="24"
-    height="24"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className="w-8 h-8 text-blue-400"
-  >
-    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-    <circle cx="9" cy="7" r="4"></circle>
-    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-  </svg>
-);
-
-const TrophyIcon = () => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="24"
-    height="24"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className="w-8 h-8 text-blue-400"
-  >
-    <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
-    <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
-    <path d="M4 22h16"></path>
-    <path d="M10 14.66V22"></path>
-    <path d="M14 14.66V22"></path>
-    <path d="M17.5 9.5 16 14.3l-1.5 4.5a2 2 0 0 1-3 0L10 14.3 8.5 9.5c.7-.3 1.5-.5 2.5-.5h3c1 0 1.8.2 2.5.5Z"></path>
-  </svg>
-);
-
 // --- Main App Component (Now the Router) ---
 export default function App() {
   return (
@@ -147,17 +87,14 @@ function LandingPage() {
         <section className="w-full max-w-5xl mt-16 md:mt-24">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <FeatureCard
-              icon={<ZapIcon />}
               title="Real-Time Action"
               description="Questions and answers happen live. No delays, just pure trivia speed!"
             />
             <FeatureCard
-              icon={<UsersIcon />}
               title="Compete with Friends"
               description="See who's the fastest and smartest in your group. Bragging rights are on the line."
             />
             <FeatureCard
-              icon={<TrophyIcon />}
               title="Live Leaderboard"
               description="Watch your name climb the ranks after every question. Can you make it to the top?"
             />
@@ -165,7 +102,7 @@ function LandingPage() {
         </section>
       </main>
       <footer className="w-full max-w-5xl py-8 mt-16 text-center text-gray-500">
-        <p>&copy; 2025 Your Trivia App. All rights reserved.</p>
+        <p>&copy; 2025 Trivia App. All rights reserved.</p>
       </footer>
     </div>
   );
