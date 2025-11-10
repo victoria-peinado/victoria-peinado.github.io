@@ -1,0 +1,23 @@
+"name": "your-trivia-app",
+  "private": true,
+  "version": "0.0.0",
+  // ADD THIS LINE:
+  "homepage": "https://magictrivia.org/",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
+    "preview": "vite preview",
+    // ADD THESE TWO LINES:
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d dist -b main"
+  },
+  "dependencies": {
+    // ... your dependencies ...
+  },
+  "devDependencies": {
+    // ... your dev dependencies ...
+    "gh-pages": "^6.1.1" // this should be here from the last step
+  }
+}
