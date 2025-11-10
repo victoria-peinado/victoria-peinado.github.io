@@ -1,8 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { HashRouter, Routes, Route, Link } from 'react-router-dom';
+import { auth } from './firebase';
+import { signInAnonymously } from 'firebase/auth';
 
 // --- Main App Component (Now the Router) ---
 export default function App() {
+  // Firebase Test - runs once when app loads
+  useEffect(() => {
+    console.log("Testing Firebase connection...");
+    
+    signInAnonymously(auth)
+      .then(() => {
+        console.log("SUCCESS: Firebase is working!");
+      })
+      .catch((error) => {
+        console.error("FIREBASE ERROR:", error.code, error.message);
+      });
+  }, []);
+
   return (
     <HashRouter>
       <Routes>
@@ -15,7 +30,7 @@ export default function App() {
   );
 }
 
-// --- 1. Landing Page (Your original component) ---
+// --- 1. Landing Page (Feature cards removed) ---
 function LandingPage() {
   const [nickname, setNickname] = useState('');
   const [message, setMessage] = useState({ text: '', type: '' });
@@ -26,8 +41,6 @@ function LandingPage() {
         text: `Welcome, ${nickname}! Ready to play... (Routing logic will go here)`,
         type: 'success'
       });
-      // In a real app, you'd navigate to /play
-      // window.location.hash = '#/play'; // This is one way to do it
       setTimeout(() => setMessage({ text: '', type: '' }), 3000);
     } else {
       setMessage({ text: 'Please enter a nickname to join!', type: 'error' });
@@ -39,7 +52,6 @@ function LandingPage() {
     <div className="min-h-screen bg-gray-900 text-white font-sans flex flex-col items-center p-4">
       <header className="w-full max-w-5xl py-4 flex justify-between items-center">
         <h1 className="text-3xl font-bold text-blue-400">Live Trivia Night</h1>
-        {/* Simple nav to see other pages during development */}
         <nav className="flex gap-4">
           <Link to="/admin" className="text-gray-300 hover:text-white">
             Admin
@@ -84,37 +96,11 @@ function LandingPage() {
             </div>
           )}
         </div>
-        <section className="w-full max-w-5xl mt-16 md:mt-24">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <FeatureCard
-              title="Real-Time Action"
-              description="Questions and answers happen live. No delays, just pure trivia speed!"
-            />
-            <FeatureCard
-              title="Compete with Friends"
-              description="See who's the fastest and smartest in your group. Bragging rights are on the line."
-            />
-            <FeatureCard
-              title="Live Leaderboard"
-              description="Watch your name climb the ranks after every question. Can you make it to the top?"
-            />
-          </div>
-        </section>
+        {/* Feature cards section removed */}
       </main>
       <footer className="w-full max-w-5xl py-8 mt-16 text-center text-gray-500">
         <p>&copy; 2025 Trivia App. All rights reserved.</p>
       </footer>
-    </div>
-  );
-}
-
-// --- Reusable Feature Card Component ---
-function FeatureCard({ icon, title, description }) {
-  return (
-    <div className="bg-gray-800 p-6 rounded-xl shadow-lg flex flex-col items-center md:items-start text-center md:text-left border border-gray-700">
-      <div className="flex-shrink-0 mb-4">{icon}</div>
-      <h3 className="text-2xl font-bold mb-2">{title}</h3>
-      <p className="text-gray-400">{description}</p>
     </div>
   );
 }
