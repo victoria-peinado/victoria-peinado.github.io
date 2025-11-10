@@ -1,31 +1,71 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { db } from './firebase';
+import { collection, doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { ADMIN_USER_ID } from './config';
 
 function AdminPage() {
-  // Placeholder functions - we'll implement these in Step 3
-  const handleCreateNewGame = () => {
-    console.log("Create New Game button clicked");
-    // TODO: Implement in Phase 2, Step 3
+  const [isCreatingGame, setIsCreatingGame] = useState(false);
+  const [message, setMessage] = useState({ text: '', type: '' });
+
+  // Create New Game Function
+  const handleCreateNewGame = async () => {
+    setIsCreatingGame(true);
+    setMessage({ text: 'Creating new game...', type: 'info' });
+
+    try {
+      // 1. Create a new game session ID
+      const gameSessionRef = doc(collection(db, `users/${ADMIN_USER_ID}/gameSessions`));
+      const gameSessionId = gameSessionRef.id;
+
+      // 2. Create the game session document with default data
+      await setDoc(gameSessionRef, {
+        state: 'waiting',  // Game states: waiting, questionactive, leaderboard
+        currentQuestionIndex: 0,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+
+      // 3. Update admin user document to point to this active game
+      const adminRef = doc(db, `users/${ADMIN_USER_ID}`);
+      await setDoc(adminRef, {
+        activeGameSessionId: gameSessionId,
+        updatedAt: serverTimestamp()
+      }, { merge: true });  // merge: true preserves other fields like subscriptionTier
+
+      console.log(" Game created successfully:", gameSessionId);
+      setMessage({ text: 'Game created successfully!', type: 'success' });
+      
+    } catch (error) {
+      console.error(" Error creating game:", error);
+      setMessage({ text: 'Error creating game. Check console.', type: 'error' });
+    } finally {
+      setIsCreatingGame(false);
+      setTimeout(() => setMessage({ text: '', type: '' }), 3000);
+    }
   };
 
+  // Placeholder functions for other buttons
   const handleShowQuestion = () => {
-    console.log("Show Question button clicked");
-    // TODO: Implement in Phase 4, Step 1
+    console.log("Show Question - Coming in Phase 4");
+    setMessage({ text: 'Show Question - Coming soon!', type: 'info' });
+    setTimeout(() => setMessage({ text: '', type: '' }), 2000);
   };
 
   const handleRevealAnswer = () => {
-    console.log("Reveal Answer button clicked");
-    // TODO: Implement in Phase 4, Step 3
+    console.log("Reveal Answer - Coming in Phase 4");
+    setMessage({ text: 'Reveal Answer - Coming soon!', type: 'info' });
+    setTimeout(() => setMessage({ text: '', type: '' }), 2000);
   };
 
   const handleShowLeaderboard = () => {
-    console.log("Show Leaderboard button clicked");
-    // TODO: Implement in Phase 4, Step 1
+    console.log("Show Leaderboard - Coming in Phase 4");
+    setMessage({ text: 'Show Leaderboard - Coming soon!', type: 'info' });
+    setTimeout(() => setMessage({ text: '', type: '' }), 2000);
   };
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-8">
-      {/* Header */}
       <header className="max-w-4xl mx-auto mb-8">
         <h1 className="text-5xl font-bold text-center text-red-400 mb-4">
            Admin Control Panel
@@ -40,7 +80,17 @@ function AdminPage() {
         </div>
       </header>
 
-      {/* Control Buttons */}
+      {/* Status Message */}
+      {message.text && (
+        <div className={`max-w-4xl mx-auto mb-4 p-4 rounded-lg text-center font-semibold ${
+          message.type === 'success' ? 'bg-green-600' :
+          message.type === 'error' ? 'bg-red-600' :
+          'bg-blue-600'
+        }`}>
+          {message.text}
+        </div>
+      )}
+
       <main className="max-w-4xl mx-auto">
         <div className="bg-gray-800 p-8 rounded-xl shadow-2xl border border-gray-700">
           <h2 className="text-3xl font-bold mb-6 text-center">Game Controls</h2>
@@ -49,12 +99,14 @@ function AdminPage() {
             {/* Create New Game Button */}
             <button
               onClick={handleCreateNewGame}
-              className="bg-green-600 hover:bg-green-700 text-white font-bold py-6 px-8 rounded-lg shadow-lg transition-transform duration-150 ease-in-out hover:scale-105 text-xl"
+              disabled={isCreatingGame}
+              className={`${
+                isCreatingGame ? 'bg-gray-600 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'
+              } text-white font-bold py-6 px-8 rounded-lg shadow-lg transition-transform duration-150 ease-in-out hover:scale-105 text-xl`}
             >
-               Create New Game
+              {isCreatingGame ? ' Creating...' : ' Create New Game'}
             </button>
 
-            {/* Show Question Button */}
             <button
               onClick={handleShowQuestion}
               className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-6 px-8 rounded-lg shadow-lg transition-transform duration-150 ease-in-out hover:scale-105 text-xl"
@@ -62,7 +114,6 @@ function AdminPage() {
                Show Question
             </button>
 
-            {/* Reveal Answer Button */}
             <button
               onClick={handleRevealAnswer}
               className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-6 px-8 rounded-lg shadow-lg transition-transform duration-150 ease-in-out hover:scale-105 text-xl"
@@ -70,23 +121,21 @@ function AdminPage() {
                Reveal Answer
             </button>
 
-            {/* Show Leaderboard Button */}
             <button
               onClick={handleShowLeaderboard}
               className="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-6 px-8 rounded-lg shadow-lg transition-transform duration-150 ease-in-out hover:scale-105 text-xl"
             >
-              Show Leaderboard
+               Show Leaderboard
             </button>
           </div>
 
-          {/* Status Display (Optional) */}
           <div className="mt-8 p-4 bg-gray-700 rounded-lg border border-gray-600">
             <h3 className="text-xl font-semibold mb-2">Current Status</h3>
             <p className="text-gray-300">
-              Game State: <span className="text-green-400 font-bold">Waiting for game...</span>
+              Game State: <span className="text-green-400 font-bold">Ready</span>
             </p>
-            <p className="text-gray-300">
-              Players Connected: <span className="text-blue-400 font-bold">0</span>
+            <p className="text-sm text-gray-400 mt-2">
+              Admin ID: {ADMIN_USER_ID.slice(0, 8)}...
             </p>
           </div>
         </div>
