@@ -2,27 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { HashRouter, Routes, Route, Link } from 'react-router-dom';
 import { auth } from './firebase';
 import { signInAnonymously } from 'firebase/auth';
+import AdminPage from './AdminPage';  // Import the new AdminPage
 
 // --- Main App Component (Now the Router) ---
 export default function App() {
-  // Firebase Test - runs once when app loads
-  useEffect(() => {
-    console.log("Testing Firebase connection...");
-    
-    signInAnonymously(auth)
-      .then(() => {
-        console.log("SUCCESS: Firebase is working!");
-      })
-      .catch((error) => {
-        console.error("FIREBASE ERROR:", error.code, error.message);
-      });
-  }, []);
 
   return (
     <HashRouter>
       <Routes>
         <Route path="/" element={<LandingPage />} />
-        <Route path="/admin" element={<AdminPage />} />
+        <Route path="/admin" element={<AdminPage />} />  {/* Use new AdminPage */}
         <Route path="/play" element={<PlayerPage />} />
         <Route path="/stream" element={<StreamPage />} />
       </Routes>
@@ -101,25 +90,6 @@ function LandingPage() {
       <footer className="w-full max-w-5xl py-8 mt-16 text-center text-gray-500">
         <p>&copy; 2025 Trivia App. All rights reserved.</p>
       </footer>
-    </div>
-  );
-}
-
-// --- 2. Admin Page (Placeholder) ---
-function AdminPage() {
-  return (
-    <div className="min-h-screen bg-gray-900 text-white p-8">
-      <h1 className="text-4xl font-bold text-center text-red-400 mb-8">
-        Admin Control Panel
-      </h1>
-      <p className="text-center text-lg text-gray-300">
-        This is where the admin controls will go.
-      </p>
-      <div className="mt-8 text-center">
-        <Link to="/" className="text-blue-400 hover:text-blue-300">
-          &larr; Back to Home
-        </Link>
-      </div>
     </div>
   );
 }
