@@ -2,6 +2,8 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { signup } from '../services/authService';
+import { db } from '../firebase'; // <-- Import Firestore db
+import { doc, setDoc } from 'firebase/firestore'; // <-- Import doc/setDoc
 
 export default function SignupPage() {
   const [email, setEmail] = useState('');
@@ -22,8 +24,19 @@ export default function SignupPage() {
     setLoading(true);
 
     try {
-      await signup(email, password);
-      navigate('/admin'); // Redirect to admin dashboard on success
+      const userCredential = await signup(email, password); // <-- Get user credential
+      const user = userCredential.user;
+
+      // NEW: Create a document in the 'users' collection
+      const userDocRef = doc(db, 'users', user.uid);
+      await setDoc(userDocRef, {
+        email: user.email,
+        isAdmin: false, // <-- Set admin to false by default
+        createdAt: new Date(),
+      });
+
+      // User is logged in, but not an admin. Send to home page.
+      navigate('/'); // <-- FIX: Don't send to /admin
     } catch (err) {
       setError('Failed to create an account. The email may already be in use.');
       console.error(err);
@@ -37,6 +50,7 @@ export default function SignupPage() {
         <h2 className="text-4xl font-extrabold text-center mb-6 text-white">Sign Up</h2>
         {error && <p className="bg-red-600 text-white p-3 rounded-lg text-center mb-4">{error}</p>}
         <form onSubmit={handleSubmit}>
+          {/* ... all your input fields ... */}
           <div className="mb-4">
             <label className="block text-gray-300 mb-2" htmlFor="email">Email</label>
             <input

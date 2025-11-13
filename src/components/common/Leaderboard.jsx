@@ -56,7 +56,7 @@ export default function Leaderboard({ gameId }) {
     <div className="min-h-screen flex flex-col items-center justify-center p-8 bg-gradient-to-br from-yellow-900 via-gray-900 to-orange-900 text-white">
       <div className="max-w-4xl w-full">
         <div className="text-center mb-12">
-          <div className="text-8xl mb-6">🏆</div>
+          <div className="text-8xl mb-6"></div>
           <h1 className="text-7xl font-bold mb-4 text-white">Leaderboard</h1>
         </div>
 

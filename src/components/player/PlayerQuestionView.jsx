@@ -1,15 +1,18 @@
 // src/components/player/PlayerQuestionView.jsx
 import React from 'react';
-import { questionBank } from '../../questionBank'; // Note: path is updated
+// SPRINT 2: No longer import static questionBank
 
+// SPRINT 2: Accept 'questions' prop
 function PlayerQuestionView({
   gameSession,
+  questions, 
   handleAnswerSubmit,
   hasAnswered,
   isSubmitting,
   selectedAnswer,
 }) {
-  const currentQuestion = questionBank[gameSession.currentQuestionIndex];
+  // SPRINT 2: Find question from the 'questions' array prop
+  const currentQuestion = questions[gameSession.currentQuestionIndex];
 
   if (!currentQuestion) {
     return (
@@ -37,6 +40,7 @@ function PlayerQuestionView({
         </div>
 
         <div className="grid grid-cols-1 gap-4">
+          {/* SPRINT 2: 'answers' is now an array of objects */}
           {currentQuestion.answers.map((answer) => (
             <button
               key={answer.letter}

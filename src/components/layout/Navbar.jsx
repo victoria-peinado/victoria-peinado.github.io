@@ -5,7 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { logout } from '../../services/authService';
 
 export default function Navbar() {
-  const { currentUser } = useAuth();
+  const { currentUser, isAdmin } = useAuth(); // <-- NEW: Get isAdmin state
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -20,25 +20,27 @@ export default function Navbar() {
   return (
     <nav className="w-full bg-gray-800 p-4 shadow-lg border-b border-gray-700">
       <div className="max-w-7xl mx-auto flex justify-between items-center">
-        {/* Logo/Home Link */}
         <Link to="/" className="text-2xl font-bold text-blue-400">
           Live Trivia Night
         </Link>
 
-        {/* Navigation Links */}
         <div className="flex items-center gap-4">
           {currentUser ? (
-            // --- Authenticated State ---
             <>
               <span className="text-gray-300 hidden sm:block">
                 Signed in as: {currentUser.email}
               </span>
-              <Link
-                to="/admin"
-                className="px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition"
-              >
-                My Dashboard
-              </Link>
+              
+              {/* NEW: Only show Dashboard link if user is an admin */}
+              {isAdmin && (
+                <Link
+                  to="/admin"
+                  className="px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition"
+                >
+                  My Dashboard
+                </Link>
+              )}
+
               <button
                 onClick={handleLogout}
                 className="px-4 py-2 text-white bg-red-600 rounded-lg hover:bg-red-700 transition"
@@ -47,7 +49,6 @@ export default function Navbar() {
               </button>
             </>
           ) : (
-            // --- Logged Out State ---
             <>
               <Link
                 to="/login"

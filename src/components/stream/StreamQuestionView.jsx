@@ -1,9 +1,11 @@
 // src/components/stream/StreamQuestionView.jsx
 import React from 'react';
-import { questionBank } from '../../questionBank'; // Note: path is updated
+// SPRINT 2: No longer import static questionBank
 
-function StreamQuestionView({ gameSession }) {
-  const currentQuestion = questionBank[gameSession.currentQuestionIndex];
+// SPRINT 2: Accept 'questions' prop
+function StreamQuestionView({ gameSession, questions }) {
+  // SPRINT 2: Find question from the 'questions' array prop
+  const currentQuestion = questions[gameSession.currentQuestionIndex];
 
   if (!currentQuestion) {
     return (
@@ -30,6 +32,7 @@ function StreamQuestionView({ gameSession }) {
 
         {/* Answer choices */}
         <div className="grid grid-cols-2 gap-6">
+          {/* SPRINT 2: 'answers' is now an array of objects */}
           {currentQuestion.answers.map((answer) => (
             <div
               key={answer.letter}
