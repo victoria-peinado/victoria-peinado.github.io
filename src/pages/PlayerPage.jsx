@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useLocation } from 'react-router-dom';
 import { useGameSession } from '../hooks/useGameSession';
+import { useQuestionBank } from '../hooks/useQuestionBank';
 import { useAuth } from '../contexts/AuthContext';
 import * as playerService from '../services/playerService';
-import { db } from '../firebase'; // <-- ADDED for re-answer check
-import { collection, query, where, getDocs } from 'firebase/firestore'; // <-- ADDED for re-answer check
-
+import { db } from '../firebase';
+import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import PlayerJoinForm from '../components/player/PlayerJoinForm';
 import PlayerWaitingView from '../components/player/PlayerWaitingView';
 import PlayerQuestionView from '../components/player/PlayerQuestionView';
@@ -18,26 +18,22 @@ export default function PlayerPage() {
   const { gameId } = useParams();
   const { currentUser, loading: authLoading } = useAuth();
   const location = useLocation();
-
   const [playerId, setPlayerId] = useState(null);
   const [nickname, setNickname] = useState(location.state?.nickname || '');
   const [isJoining, setIsJoining] = useState(false);
   const [message, setMessage] = useState({ text: '', type: '' });
-
   const { gameSession, loading: gameLoading, error: gameError } = useGameSession(gameId);
-
+  const { questions } = useQuestionBank(gameSession?.questionBankId);
   const [selectedAnswer, setSelectedAnswer] = useState(null);
   const [hasAnswered, setHasAnswered] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Reset answer state when question index changes
+  // Reset answer state when question changes
   useEffect(() => {
-    setSelectedAnswer(null);
-    setHasAnswered(false);
-
-    // --- BRAINSTORM FIX ---
-    // Check if player has already answered this question on reload
-    if (gameSession?.state === 'questionactive' && playerId && gameId) {
+    console.log("Question changed or state updated:", gameSession?.state, "Question:", gameSession?.currentQuestionIndex);
+    
+    // Only reset if we're on a NEW question (questionactive state)
+    if (gameSession?.state === 'questionactive') {
       const checkAnswer = async () => {
         try {
           const q = query(
@@ -45,65 +41,90 @@ export default function PlayerPage() {
             where('playerId', '==', playerId),
             where('questionIndex', '==', gameSession.currentQuestionIndex)
           );
-          
           const snapshot = await getDocs(q);
           
           if (!snapshot.empty) {
-            console.log("Player has already answered this question.");
+            console.log("Player already answered this question");
+            const existingAnswer = snapshot.docs[0].data();
+            setSelectedAnswer(existingAnswer.answer);
             setHasAnswered(true);
-            // Optionally, set their previous answer to display it
-            const existingAnswerLetter = snapshot.docs[0].data().answerLetter;
-            setSelectedAnswer(existingAnswerLetter);
+          } else {
+            console.log("No answer found, resetting states");
+            setSelectedAnswer(null);
+            setHasAnswered(false);
           }
         } catch (error) {
           console.error("Error checking existing answer:", error);
         }
       };
-      checkAnswer();
-    }
-    // --- END FIX ---
 
+      if (playerId && gameId) {
+        checkAnswer();
+      }
+    }
+    // Don't reset states if we're in answerrevealed or other states
   }, [gameSession?.currentQuestionIndex, gameSession?.state, playerId, gameId]);
 
-  // Check localStorage for existing player
+  // Check localStorage ONLY for this specific game
   useEffect(() => {
     if (authLoading || gameLoading || !gameSession || !currentUser) return;
 
-    const savedPlayerId = localStorage.getItem('triviaPlayerId');
-    const savedGameId = localStorage.getItem('triviaGameId');
-    
-    if (savedPlayerId === currentUser.uid && savedGameId === gameSession.id) {
-      console.log("✅ Found existing player for THIS game:", savedPlayerId);
-      setPlayerId(savedPlayerId);
-    } else if (savedPlayerId) {
-      console.log("🧹 Clearing player from old game...");
-      localStorage.removeItem('triviaPlayerId');
-      localStorage.removeItem('triviaNickname');
-      localStorage.removeItem('triviaGameId');
-    }
-  }, [gameSession, gameLoading, currentUser, authLoading]);
+    const checkExistingPlayer = async () => {
+      const savedPlayerId = localStorage.getItem('triviaPlayerId');
+      const savedGameId = localStorage.getItem('triviaGameId');
+      const savedNickname = localStorage.getItem('triviaNickname');
 
-  // Auto-join if nickname was passed (this logic might be removed if PIN is only entry)
-  useEffect(() => {
-    if (location.state?.nickname && !playerId && gameSession && !isJoining && currentUser) {
-      handleJoinGame();
-    }
-  }, [location.state?.nickname, playerId, gameSession, isJoining, currentUser]);
+      // If saved game ID doesn't match current game, clear and exit
+      if (savedGameId !== gameId) {
+        console.log("Different game detected, clearing old player data");
+        localStorage.removeItem('triviaPlayerId');
+        localStorage.removeItem('triviaNickname');
+        localStorage.removeItem('triviaGameId');
+        return;
+      }
+
+      // If everything matches, verify player actually exists in THIS game
+      if (savedPlayerId === currentUser.uid && savedGameId === gameId && savedNickname) {
+        try {
+          const playerRef = doc(db, `gameSessions/${gameId}/players/${savedPlayerId}`);
+          const playerSnap = await getDoc(playerRef);
+          
+          if (playerSnap.exists()) {
+            console.log("Found existing player for THIS game:", savedPlayerId);
+            setPlayerId(savedPlayerId);
+            setNickname(savedNickname);
+          } else {
+            console.log("Player doc doesn't exist in THIS game, clearing localStorage");
+            localStorage.removeItem('triviaPlayerId');
+            localStorage.removeItem('triviaNickname');
+            localStorage.removeItem('triviaGameId');
+          }
+        } catch (error) {
+          console.error("Error verifying player:", error);
+        }
+      }
+    };
+
+    checkExistingPlayer();
+  }, [gameSession, gameLoading, currentUser, authLoading, gameId]);
 
   const handleMessage = (text, type, duration = 3000) => {
     setMessage({ text, type });
     setTimeout(() => setMessage({ text: '', type: '' }), duration);
   };
 
-  const handleJoinGame = async () => {
+  const handleJoinGame = async (e) => {
+    e.preventDefault();
     if (!nickname.trim()) {
       handleMessage('Please enter a nickname!', 'error', 2000);
       return;
     }
+
     if (!gameSession) {
       handleMessage('No active game! Ask the host to create one.', 'error');
       return;
     }
+
     if (!currentUser) {
       handleMessage('You must be logged in to join!', 'error');
       return;
@@ -112,7 +133,6 @@ export default function PlayerPage() {
     setIsJoining(true);
     try {
       const uid = await playerService.joinGame(gameSession.id, currentUser.uid, nickname.trim());
-      
       localStorage.setItem('triviaPlayerId', uid);
       localStorage.setItem('triviaNickname', nickname.trim());
       localStorage.setItem('triviaGameId', gameSession.id);
@@ -126,10 +146,14 @@ export default function PlayerPage() {
   };
 
   const handleAnswerSubmit = async (answerObj) => {
-    if (hasAnswered || isSubmitting) return;
+    if (hasAnswered || isSubmitting) {
+      console.log("Already answered or submitting, ignoring click");
+      return;
+    }
 
     setIsSubmitting(true);
     setSelectedAnswer(answerObj.letter);
+    console.log("Answer submitted:", answerObj.letter);
 
     try {
       await playerService.submitAnswer({
@@ -139,94 +163,118 @@ export default function PlayerPage() {
         answerLetter: answerObj.letter,
         isCorrect: answerObj.correct,
       });
-      setHasAnswered(true);
-    } catch (error)
-    {
+      setHasAnswered(true); // THIS MUST STAY TRUE
+      console.log("Answer successfully submitted and hasAnswered set to true");
+    } catch (error) {
+      console.error("Error submitting answer:", error);
       handleMessage(error.message, 'error');
       setSelectedAnswer(null);
+      setHasAnswered(false);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   // --- RENDER LOGIC ---
-
   if (authLoading || gameLoading) {
-    return <LoadingScreen message="Loading player..." />;
+    return <LoadingScreen message="Loading game..." />;
   }
 
-  if (!currentUser) {
-    return <LoadingScreen message="Redirecting to login..." />;
-  }
-
-  if (!gameId || gameError) {
-    return <ErrorScreen error="This game does not exist or is invalid." />;
-  }
-
-  if (!playerId) {
-    return (
-      <PlayerJoinForm
-        nickname={nickname}
-        setNickname={setNickname}
-        handleJoinGame={handleJoinGame}
-        isJoining={isJoining}
-        gameLoading={gameLoading}
-        gameSession={gameSession}
-        message={message}
-      />
-    );
+  if (gameError) {
+    return <ErrorScreen message={gameError} />;
   }
 
   if (!gameSession) {
-    const savedNickname = localStorage.getItem('triviaNickname');
+    return <ErrorScreen message="Game session not found." />;
+  }
+
+  // Not joined yet
+  if (!playerId) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-green-900 text-white p-8 flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-8xl mb-6"></div>
-          <h1 className="text-4xl font-bold mb-4">Waiting for Game...</h1>
-          <p className="text-xl text-gray-300">Welcome, {savedNickname}!</p>
+      <div className="min-h-screen bg-gradient-to-br from-purple-600 to-blue-500 p-8">
+        <div className="max-w-md mx-auto">
+          {message.text && (
+            <div className={`mb-4 p-4 rounded ${message.type === 'error' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+              {message.text}
+            </div>
+          )}
+          <PlayerJoinForm
+            nickname={nickname}
+            onNicknameChange={setNickname}
+            onJoinGame={handleJoinGame}
+            isJoining={isJoining}
+          />
         </div>
       </div>
     );
   }
 
-  switch (gameSession.state) {
-    case 'waiting':
-      return <PlayerWaitingView />;
+  // Render based on game state
+  const renderGameState = () => {
+    console.log("Rendering state:", gameSession.state, "hasAnswered:", hasAnswered, "selectedAnswer:", selectedAnswer);
     
-    case 'questionactive':
-      return (
-        <PlayerQuestionView
-          gameSession={gameSession}
-          handleAnswerSubmit={handleAnswerSubmit}
-          hasAnswered={hasAnswered}
-          isSubmitting={isSubmitting}
-          selectedAnswer={selectedAnswer}
-        />
-      );
-
-    case 'answerrevealed':
-      return (
-        <PlayerAnswerView
-          gameSession={gameSession}
-          selectedAnswer={selectedAnswer}
-        />
-      );
-
-    case 'leaderboard':
-      return (
-        <div className="min-h-screen bg-gradient-to-br from-yellow-900 via-gray-900 to-orange-900 text-white p-8">
-          <Leaderboard gameId={gameId} />
-        </div>
-      );
-
-    default:
-      return (
-        <div className="min-h-screen bg-gray-900 text-white p-8 flex items-center justify-center">
+    switch (gameSession.state) {
+      case 'waiting':
+        return <PlayerWaitingView nickname={nickname} />;
+      
+      case 'questionactive':
+        return (
+          <PlayerQuestionView
+            gameSession={gameSession}
+            questions={questions}
+            onAnswerSelect={handleAnswerSubmit}
+            hasAnswered={hasAnswered}
+            isSubmitting={isSubmitting}
+            selectedAnswer={selectedAnswer}
+          />
+        );
+      
+      case 'answerrevealed':
+        return (
+          <PlayerAnswerView
+            gameSession={gameSession}
+            questions={questions}
+            selectedAnswer={selectedAnswer}
+            hasAnswered={hasAnswered}
+          />
+        );
+      
+      case 'leaderboard':
+        return (
           <div className="text-center">
-            <h1 className="text-4xl font-bold">Waiting...</h1>
+            <h2 className="text-4xl font-bold text-white mb-8">Leaderboard</h2>
+            <Leaderboard gameId={gameSession.id} />
           </div>
-        </div>
-      );
-  }
+        );
+      
+      case 'finished':
+        return (
+          <div className="text-center text-white">
+            <h2 className="text-4xl font-bold mb-4">Game Over!</h2>
+            <p className="text-2xl mb-8">Thanks for playing!</p>
+            <Leaderboard gameId={gameSession.id} />
+          </div>
+        );
+      
+      default:
+        return (
+          <div className="text-center text-white">
+            <p className="text-xl">Unknown game state: {gameSession.state}</p>
+          </div>
+        );
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-purple-600 to-blue-500 p-8">
+      <div className="max-w-4xl mx-auto">
+        {message.text && (
+          <div className={`mb-4 p-4 rounded ${message.type === 'error' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+            {message.text}
+          </div>
+        )}
+        {renderGameState()}
+      </div>
+    </div>
+  );
 }

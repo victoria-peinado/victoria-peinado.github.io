@@ -1,0 +1,83 @@
++---public
+|   |   CNAME
+|   |   icon.jpg
+|   |
+|   \---.qodo
+|       +---agents
+|       \---workflows
+\---src
+    |   App.css
+    |   App.jsx
+    |   firebase.js
+    |   index.css
+    |   Leaderboard.jsx
+    |   main.jsx
+    |
+    +---.vs
+    |   |   ProjectSettings.json
+    |   |   slnx.sqlite
+    |   |   VSWorkspaceState.json
+    |   |
+    |   \---src
+    |       \---v17
+    +---assets
+    |       react.svg
+    |
+    +---components
+    |   +---admin
+    |   |       AdminControls.jsx
+    |   |       CsvUploader.jsx
+    |   |       GameStatus.jsx
+    |   |       LivePlayerList.jsx
+    |   |
+    |   +---common
+    |   |       ErrorScreen.jsx
+    |   |       Leaderboard.jsx
+    |   |       LoadingScreen.jsx
+    |   |       LoadingSpinner.jsx
+    |   |       Timer.jsx
+    |   |
+    |   +---layout
+    |   |       KioskLayout.jsx
+    |   |       MainLayout.jsx
+    |   |       Navbar.jsx
+    |   |       ProtectedRoute.jsx
+    |   |
+    |   +---player
+    |   |       PlayerAnswerView.jsx
+    |   |       PlayerJoinForm.jsx
+    |   |       PlayerQuestionView.jsx
+    |   |       PlayerWaitingView.jsx
+    |   |
+    |   \---stream
+    |           StreamAnswerView.jsx
+    |           StreamQuestionView.jsx
+    |           StreamWaitingView.jsx
+    |
+    +---contexts
+    |       AuthContext.jsx
+    |
+    +---hooks
+    |       useAuth.js
+    |       useGameSession.js
+    |       useLeaderboard.js
+    |       useQuestionBank.js
+    |
+    +---pages
+    |       AdminDashboard.jsx
+    |       AdminGame.jsx
+    |       AdminPage.jsx
+    |       AdminQuestionBanks.jsx
+    |       LandingPage.jsx
+    |       LoginPage.jsx
+    |       PlayerPage.jsx
+    |       PlayerPinEntry.jsx
+    |       SignupPage.jsx
+    |       StreamPage.jsx
+    |
+    \---services
+            authService.js
+            bankService.js
+            gameService.js
+            playerService.js
+            scoringService.js

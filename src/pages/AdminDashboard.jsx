@@ -1,194 +1,237 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { db } from '../firebase';
-import { collection, query, where, onSnapshot } from 'firebase/firestore'; // Removed orderBy
 import { useAuth } from '../contexts/AuthContext';
+import * as bankService from '../services/bankService';
 import * as gameService from '../services/gameService';
-import LoadingScreen from '../components/common/LoadingScreen';
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '../firebase';
 
 export default function AdminDashboard() {
   const { currentUser } = useAuth();
-  const [games, setGames] = useState([]);
-  const [banks, setBanks] = useState([]); // <-- SPRINT 2: Add state for banks
-  const [selectedBankId, setSelectedBankId] = useState(''); // <-- SPRINT 2: Add state for dropdown
-  const [loadingGames, setLoadingGames] = useState(true);
-  const [loadingBanks, setLoadingBanks] = useState(true); // <-- SPRINT 2: Add separate loading state
-  const [isCreating, setIsCreating] = useState(false);
-  const [message, setMessage] = useState({ text: '', type: '' }); // <-- Add message state
   const navigate = useNavigate();
+  const [questionBanks, setQuestionBanks] = useState([]);
+  const [selectedBankId, setSelectedBankId] = useState('');
+  const [games, setGames] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [message, setMessage] = useState({ text: '', type: '' });
+  const [questionCounts, setQuestionCounts] = useState({});
 
-  // Listen to the user's game sessions
-  useEffect(() => {
-    if (!currentUser) return;
-
-    setLoadingGames(true);
-    const q = query(
-      collection(db, 'gameSessions'),
-      where('adminId', '==', currentUser.uid)
-    );
-    // Note: Removed orderBy('createdAt', 'desc') as it requires a composite index.
-    // Sorting can be done client-side if needed.
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const gamesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      // Sort client-side to avoid index requirement
-      gamesData.sort((a, b) => b.createdAt?.toMillis() - a.createdAt?.toMillis());
-      setGames(gamesData);
-      setLoadingGames(false);
-    }, (error) => {
-      console.error("Error fetching games:", error);
-      setLoadingGames(false);
-    });
-
-    return () => unsubscribe();
-  }, [currentUser]);
-
-  // SPRINT 2: Listen to the user's question banks
-  useEffect(() => {
-    if (!currentUser) return;
-
-    setLoadingBanks(true);
-    const q = query(
-      collection(db, 'questionBanks'),
-      where('ownerId', '==', currentUser.uid)
-    );
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const banksData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setBanks(banksData);
-      if (banksData.length > 0) {
-        setSelectedBankId(banksData[0].id); // Default to first bank
-      }
-      setLoadingBanks(false);
-    }, (error) => {
-      console.error("Error fetching banks:", error);
-      setLoadingBanks(false);
-    });
-
-    return () => unsubscribe();
-  }, [currentUser]);
-
-  // Updated message handler
   const handleMessage = (text, type, duration = 3000) => {
     setMessage({ text, type });
     setTimeout(() => setMessage({ text: '', type: '' }), duration);
   };
 
-  // SPRINT 2: Updated function to use selected bank
-  const handleCreateNewGame = async (e) => {
-    e.preventDefault(); // It's a form now
+  // Fetch question banks and their counts
+  useEffect(() => {
+    const fetchBanks = async () => {
+      try {
+        const banks = await bankService.getQuestionBanks(currentUser.uid);
+        setQuestionBanks(banks);
+
+        // Fetch question counts for each bank
+        const counts = {};
+        for (const bank of banks) {
+          try {
+            const questionsRef = collection(db, `questionBanks/${bank.id}/questions`);
+            const snapshot = await getDocs(questionsRef);
+            counts[bank.id] = snapshot.size;
+          } catch (error) {
+            console.error(`Error fetching questions for bank ${bank.id}:`, error);
+            counts[bank.id] = 0;
+          }
+        }
+        setQuestionCounts(counts);
+      } catch (error) {
+        console.error('Error fetching banks:', error);
+        handleMessage('Error loading question banks', 'error');
+      }
+    };
+
+    if (currentUser) {
+      fetchBanks();
+    }
+  }, [currentUser]);
+
+  // Fetch games for admin
+  useEffect(() => {
+    const fetchGames = async () => {
+      try {
+        const querySnapshot = await gameService.getGamesForAdmin(currentUser.uid);
+        const gamesData = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        setGames(gamesData);
+      } catch (error) {
+        console.error('Error fetching games:', error);
+        handleMessage('Error loading games', 'error');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (currentUser) {
+      fetchGames();
+    }
+  }, [currentUser]);
+
+  const handleCreateGame = async (e) => {
+    e.preventDefault();
     if (!selectedBankId) {
-      handleMessage('Please select a question bank first.', 'error');
+      handleMessage('Please select a question bank', 'error');
       return;
     }
 
-    setIsCreating(true);
+    const questionCount = questionCounts[selectedBankId] || 0;
+    if (questionCount === 0) {
+      handleMessage('Selected question bank has no questions! Upload a CSV first.', 'error');
+      return;
+    }
+
     try {
-      // Pass the selected question bank ID to the service
-      const newGameId = await gameService.createNewGame(currentUser.uid, selectedBankId);
-      handleMessage('Game created successfully!', 'success', 1500);
-      navigate(`/admin/game/${newGameId}`);
+      const gameId = await gameService.createNewGame(currentUser.uid, selectedBankId);
+      handleMessage('Game created successfully!', 'success');
+      navigate(`/admin/game/${gameId}`);
     } catch (error) {
+      console.error('Error creating game:', error);
       handleMessage(error.message, 'error');
-    } finally {
-      setIsCreating(false);
     }
   };
 
-  const loading = loadingGames || loadingBanks; // Page is loading if either is loading
+  const handleOpenGame = (gameId) => {
+    navigate(`/admin/game/${gameId}`);
+  };
+
+  const handleOpenStream = (gameId) => {
+    window.open(`/stream/${gameId}`, '_blank');
+  };
+
+  // Helper function to get bank display name (handles both old and new formats)
+  const getBankDisplayName = (bank) => {
+    const name = bank.name || bank.title || 'Untitled Bank';
+    const count = questionCounts[bank.id] ?? 0;
+    return `${name} (${count} questions)`;
+  };
 
   if (loading) {
-    return <LoadingScreen message="Loading dashboard..." />;
+    return (
+      <div className="max-w-6xl mx-auto p-6">
+        <p>Loading dashboard...</p>
+      </div>
+    );
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-8">
-      {/* Status Message */}
+    <div className="max-w-6xl mx-auto p-6">
+      <div className="mb-6 flex justify-between items-center">
+        <div>
+          <h1 className="text-4xl font-bold">Admin Dashboard</h1>
+          <p className="text-gray-600 mt-2">Signed in as: {currentUser.email}</p>
+        </div>
+        <Link
+          to="/admin/banks"
+          className="bg-purple-600 text-white px-6 py-3 rounded hover:bg-purple-700"
+        >
+          Manage Question Banks
+        </Link>
+      </div>
+
       {message.text && (
-        <div className={`max-w-4xl mx-auto mb-4 p-4 rounded-lg text-center font-semibold ${
-          message.type === 'success' ? 'bg-green-600' : 'bg-red-600'
-        }`}>
+        <div className={`mb-4 p-4 rounded ${message.type === 'error' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
           {message.text}
         </div>
       )}
 
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-4xl font-bold">Admin Dashboard</h1>
-        <Link
-          to="/admin/questions"
-          className="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-3 px-5 rounded-lg"
-        >
-          My Question Banks
-        </Link>
-      </div>
-
-      {/* SPRINT 2: Create New Game Form */}
-      <form onSubmit={handleCreateNewGame} className="mb-8 p-6 bg-gray-800 rounded-xl shadow-lg">
-        <h2 className="text-2xl font-semibold mb-4">Create New Game</h2>
-        {banks.length === 0 ? (
-          <div className="text-center p-4 bg-gray-700 rounded-lg">
-            <p className="text-lg text-gray-300">You must create a question bank before you can create a game.</p>
+      {/* Create New Game Section */}
+      <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+        <h2 className="text-2xl font-bold mb-4">Create New Game</h2>
+        
+        {questionBanks.length === 0 ? (
+          <div className="text-center py-8 text-gray-500">
+            <p className="mb-4">No question banks yet!</p>
             <Link
-              to="/admin/questions"
-              className="mt-4 inline-block bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded-lg"
+              to="/admin/banks"
+              className="bg-purple-600 text-white px-6 py-3 rounded hover:bg-purple-700 inline-block"
             >
-              Create a Bank
+              Create Your First Question Bank
             </Link>
           </div>
         ) : (
-          <div className="flex gap-4">
-            <select
-              value={selectedBankId}
-              onChange={(e) => setSelectedBankId(e.target.value)}
-              className="flex-grow p-3 rounded-lg bg-gray-700 text-white border border-gray-600"
-            >
-              {banks.map(bank => (
-                <option key={bank.id} value={bank.id}>
-                  {bank.title} ({bank.questionCount || 0} questions)
-                </option>
-              ))}
-            </select>
+          <form onSubmit={handleCreateGame} className="flex gap-4 items-end">
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Select Question Bank
+              </label>
+              <select
+                value={selectedBankId}
+                onChange={(e) => setSelectedBankId(e.target.value)}
+                className="w-full px-4 py-2 border rounded"
+              >
+                <option value="">Choose a question bank...</option>
+                {questionBanks.map(bank => (
+                  <option key={bank.id} value={bank.id}>
+                    {getBankDisplayName(bank)}
+                  </option>
+                ))}
+              </select>
+            </div>
             <button
               type="submit"
-              disabled={isCreating || !selectedBankId}
-              className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-5 rounded-lg disabled:bg-gray-500"
+              className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700"
             >
-              {isCreating ? 'Creating...' : 'Create New Game'}
+              Create Game
             </button>
-          </div>
+          </form>
         )}
-      </form>
+      </div>
 
-      <div className="bg-gray-800 p-6 rounded-xl shadow-lg">
-        <h2 className="text-2xl font-semibold mb-4">My Games</h2>
-        <div className="space-y-4">
-          {games.length === 0 ? (
-            <p className="text-gray-400">You haven't created any games yet.</p>
-          ) : (
-            games.map(game => (
-              <Link
-                key={game.id}
-                to={`/admin/game/${game.id}`}
-                className="block p-4 bg-gray-700 rounded-lg hover:bg-gray-600 transition"
-              >
-                <div className="flex justify-between items-center">
-                  <div>
-                    <h3 className="text-xl font-bold text-blue-400">
-                      Game PIN: <span className="tracking-widest">{game.gamePin}</span>
-                    </h3>
-                    <p className="text-sm text-gray-500">Bank: {banks.find(b => b.id === game.questionBankId)?.title || 'Unknown'}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-gray-300 font-semibold uppercase">{game.state}</p>
-                    <p className="text-sm text-gray-500">
-                      {game.createdAt?.toDate().toLocaleString()}
-                    </p>
+      {/* My Games Section */}
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <h2 className="text-2xl font-bold mb-4">My Games</h2>
+        
+        {games.length === 0 ? (
+          <p className="text-gray-500 text-center py-4">No games created yet.</p>
+        ) : (
+          <div className="space-y-4">
+            {games.map(game => {
+              const bank = questionBanks.find(b => b.id === game.questionBankId);
+              const bankName = bank ? (bank.name || bank.title || 'Unknown Bank') : 'Unknown Bank';
+              
+              return (
+                <div key={game.id} className="border rounded-lg p-4 hover:bg-gray-50">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <p className="font-semibold">
+                        Game PIN: <span className="text-blue-600 text-xl">{game.gamePin}</span>
+                      </p>
+                      <p className="text-sm text-gray-600">Bank: {bankName}</p>
+                      <p className="text-sm text-gray-600">
+                        State: <span className="capitalize">{game.state}</span>
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        {game.createdAt?.toDate().toLocaleString()}
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleOpenGame(game.id)}
+                        className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                      >
+                        Manage
+                      </button>
+                      <button
+                        onClick={() => handleOpenStream(game.id)}
+                        className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700"
+                      >
+                        Open Stream
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </Link>
-            ))
-          )}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

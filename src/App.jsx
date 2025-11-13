@@ -1,10 +1,10 @@
 import React from 'react';
-import { HashRouter, Routes, Route } from 'react-router-dom';
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 
 // Import Layout Components
 import ProtectedRoute from './components/layout/ProtectedRoute';
-import MainLayout from './components/layout/MainLayout'; // <-- UPDATED
-import KioskLayout from './components/layout/KioskLayout'; // <-- UPDATED
+import MainLayout from './components/layout/MainLayout';
+import KioskLayout from './components/layout/KioskLayout';
 
 // Import all our pages
 import LandingPage from './pages/LandingPage';
@@ -22,13 +22,11 @@ import AdminQuestionBanks from './pages/AdminQuestionBanks';
 export default function App() {
   return (
     <HashRouter>
-      {/* Routes are now wrapped in layouts */}
       <Routes>
         {/* Routes WITH Navbar */}
         <Route element={<MainLayout />}>
           <Route path="/" element={<LandingPage />} />
-          <Route path="/play" element={<PlayerPinEntry />} />
-          <Route path="/play/:gameId" element={<PlayerPage />} />
+          <Route path="/join" element={<PlayerPinEntry />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
 
@@ -42,6 +40,14 @@ export default function App() {
             }
           />
           <Route
+            path="/admin/banks"
+            element={
+              <ProtectedRoute>
+                <AdminQuestionBanks />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/admin/game/:gameId"
             element={
               <ProtectedRoute>
@@ -49,18 +55,13 @@ export default function App() {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/admin/questions"
-            element={
-              <ProtectedRoute>
-                <AdminQuestionBanks />
-              </ProtectedRoute>
-            }
-          />
         </Route>
 
         {/* Routes WITHOUT Navbar (Kiosk Mode) */}
         <Route element={<KioskLayout />}>
+          {/* Redirect /play to /join */}
+          <Route path="/play" element={<Navigate to="/join" replace />} />
+          <Route path="/play/:gameId" element={<PlayerPage />} />
           <Route path="/stream/:gameId" element={<StreamPage />} />
         </Route>
       </Routes>

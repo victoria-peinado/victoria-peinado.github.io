@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import * as bankService from '../../services/bankService'; // <-- This is the fix
+import * as bankService from '../../services/bankService';
 
 export default function CsvUploader({ bankId, onUploadSuccess }) {
   const [isUploading, setIsUploading] = useState(false);
@@ -25,42 +25,43 @@ export default function CsvUploader({ bankId, onUploadSuccess }) {
       handleMessage(error.message, 'error');
     } finally {
       setIsUploading(false);
-      // Reset file input
       event.target.value = null;
     }
   };
 
   return (
-    <div className="mt-4">
-      <label
-        htmlFor={`csv-upload-${bankId}`}
-        className={`inline-block font-bold py-2 px-4 rounded-lg ${
-          isUploading
-            ? 'bg-gray-500 cursor-not-allowed'
-            : 'bg-blue-600 hover:bg-blue-700 cursor-pointer'
-        }`}
-      >
-        {isUploading ? 'Uploading...' : 'Upload Questions (CSV)'}
-      </label>
+    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
       <input
         type="file"
-        id={`csv-upload-${bankId}`}
         accept=".csv"
         onChange={handleFileChange}
         disabled={isUploading}
-        className="hidden"
+        className="mb-4"
       />
-      
+
       {message.text && (
-        <p className={`mt-2 text-sm ${
-          message.type === 'success' ? 'text-green-400' : 'text-red-400'
+        <div className={`mt-4 p-3 rounded ${
+          message.type === 'error' 
+            ? 'bg-red-100 text-red-700' 
+            : message.type === 'success' 
+            ? 'bg-green-100 text-green-700' 
+            : 'bg-blue-100 text-blue-700'
         }`}>
           {message.text}
-        </p>
+        </div>
       )}
-      <p className="text-xs text-gray-500 mt-2">
-        CSV Columns: question, answerA, answerB, answerC, answerD, correctLetter, duration
-      </p>
+
+      <div className="text-sm text-gray-600 mt-4">
+        <p className="font-semibold mb-2">CSV Format (semicolon-separated):</p>
+        <code className="bg-gray-100 p-2 rounded block">
+          question;answerA;answerB;answerC;answerD;correctLetter;duration
+        </code>
+        <p className="mt-2 text-xs">
+          • Use semicolons (;) as delimiters<br/>
+          • duration is in seconds (e.g., 30)<br/>
+          • correctLetter must be A, B, C, or D
+        </p>
+      </div>
     </div>
   );
 }

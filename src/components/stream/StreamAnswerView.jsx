@@ -1,24 +1,21 @@
 // src/components/stream/StreamAnswerView.jsx
 import React from 'react';
-// SPRINT 2: No longer import static questionBank
 
-// SPRINT 2: Accept 'questions' prop
 function StreamAnswerView({ gameSession, questions }) {
-  // SPRINT 2: Find question from the 'questions' array prop
   const currentQuestion = questions[gameSession.currentQuestionIndex];
 
   if (!currentQuestion) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-8">
         <div className="text-center">
-          <h1 className="text-5xl font-bold mb-4">Game Over!</h1>
+          <h1 className="text-5xl font-bold mb-4">Until next time!</h1>
           <p className="text-2xl text-gray-300">All questions completed.</p>
         </div>
       </div>
     );
   }
 
-  // SPRINT 2: Find correct answer from 'correctLetter' field
+  // FIXED: Find correct answer from correctLetter field
   const correctAnswer = currentQuestion.answers.find(
     a => a.letter === currentQuestion.correctLetter
   );
@@ -29,45 +26,44 @@ function StreamAnswerView({ gameSession, questions }) {
         <div className="text-center mb-12">
           <div className="text-8xl mb-6"></div>
           <div className="text-2xl text-green-400 mb-4">
-            Question {gameSession.currentQuestionIndex + 1} - Answer
+            Question {gameSession.currentQuestionIndex + 1}
           </div>
-          <h1 className="text-5xl md:text-6xl font-bold mb-8 px-4">
+          <h1 className="text-5xl font-bold mb-8">
             {currentQuestion.question}
           </h1>
+          
+          {/* FIXED: Display correctAnswer.text instead of correctAnswer object */}
+          <div className="text-3xl text-green-300 font-bold mb-8">
+            Correct Answer: {currentQuestion.correctLetter}
+          </div>
+          <div className="text-2xl text-white">
+            {correctAnswer?.text || 'Answer not found'}
+          </div>
         </div>
 
         {/* All answer choices with correct one highlighted */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* SPRINT 2: 'answers' is now an array of objects */}
-          {currentQuestion.answers.map((answer) => (
-            <div
-              key={answer.letter}
-              className={`
-                rounded-2xl p-8 text-center border-4 transition-all
-                ${answer.letter === currentQuestion.correctLetter
-                  ? 'bg-green-700 border-green-400 animate-pulse' 
-                  : 'bg-gray-800 border-gray-600 opacity-50'
-                }
-              `}
-            >
-              <div className="text-3xl font-bold mb-3">
-                {answer.letter} {answer.letter === currentQuestion.correctLetter && '✓'}
+        <div className="grid grid-cols-2 gap-6">
+          {currentQuestion.answers.map((answer) => {
+            const isCorrect = answer.letter === currentQuestion.correctLetter;
+            return (
+              <div
+                key={answer.letter}
+                className={`rounded-lg p-8 text-center transition-all ${
+                  isCorrect
+                    ? 'bg-green-500 scale-105 ring-4 ring-green-300'
+                    : 'bg-white bg-opacity-20'
+                }`}
+              >
+                <div className={`text-4xl font-bold mb-2 ${isCorrect ? 'text-white' : ''}`}>
+                  {answer.letter}
+                </div>
+                <div className={`text-2xl ${isCorrect ? 'text-white font-bold' : ''}`}>
+                  {answer.text}
+                </div>
               </div>
-              <div className="text-xl text-gray-100">{answer.text}</div>
-            </div>
-          ))}
+            );
+          })}
         </div>
-
-        {correctAnswer && (
-          <div className="text-center mt-12">
-            <div className="text-3xl font-bold text-green-400 mb-2">
-              Correct Answer: {correctAnswer.letter}
-            </div>
-            <div className="text-xl text-gray-300">
-              {correctAnswer.text}
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

@@ -1,12 +1,9 @@
 // src/services/playerService.js
 import { db } from '../firebase';
-// No longer import auth or signInAnonymously
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
-// No longer import ADMIN_USER_ID or ../config
+import { doc, setDoc, serverTimestamp, collection, query, where, getDocs } from 'firebase/firestore';
 
 /**
- * Creates a player document in Firestore.
- * Assumes the user is already authenticated.
+ * Creates a player document in Firestore after checking nickname uniqueness.
  * @param {string} gameId - The ID of the game to join.
  * @param {string} userId - The authenticated user's UID.
  * @param {string} nickname - The player's chosen nickname.
@@ -14,43 +11,45 @@ import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
  */
 export const joinGame = async (gameId, userId, nickname) => {
   try {
-    // NEW PATH: Uses top-level collection
-    const playerRef = doc(
-      db,
-      `gameSessions/${gameId}/players/${userId}`
-    );
+    const trimmedNickname = nickname.trim();
 
+    // Check if nickname is already taken in this game
+    const playersRef = collection(db, `gameSessions/${gameId}/players`);
+    const q = query(playersRef, where('nickname', '==', trimmedNickname));
+    const snapshot = await getDocs(q);
+
+    // If nickname exists and it's NOT the current user, reject
+    if (!snapshot.empty) {
+      const existingPlayer = snapshot.docs[0];
+      if (existingPlayer.id !== userId) {
+        throw new Error(`Nickname "${trimmedNickname}" is already taken! Please choose another.`);
+      }
+      // If it IS the current user, allow them to rejoin
+      console.log('Player rejoining with same nickname');
+    }
+
+    // Create or update player document
+    const playerRef = doc(db, `gameSessions/${gameId}/players/${userId}`);
     await setDoc(playerRef, {
-      nickname: nickname.trim(),
+      nickname: trimmedNickname,
       score: 0,
       joinedAt: serverTimestamp()
     });
 
-    console.log("Player document created");
+    console.log("Player document created/updated");
     return userId;
   } catch (error) {
     console.error("Error joining game:", error);
-    throw new Error('Error joining game. Try again!');
+    throw error; // Re-throw to preserve the error message
   }
 };
 
 /**
  * Submits a player's answer to Firestore.
- * @param {object} params - Parameters object.
- * @param {string} params.gameId - The current game ID.
- * @param {string} params.playerId - The player's ID (same as their auth UID).
- * @param {number} params.questionIndex - The index of the current question.
- * @param {string} params.answerLetter - The answer letter (e.g., 'A').
- * @param {boolean} params.isCorrect - Whether the answer is correct.
  */
 export const submitAnswer = async ({ gameId, playerId, questionIndex, answerLetter, isCorrect }) => {
   try {
-    // NEW PATH: Uses top-level collection
-    const answerRef = doc(
-      db,
-      `gameSessions/${gameId}/answers/${playerId}_q${questionIndex}`
-    );
-
+    const answerRef = doc(db, `gameSessions/${gameId}/answers/${playerId}_q${questionIndex}`);
     await setDoc(answerRef, {
       playerId: playerId,
       questionIndex: questionIndex,
@@ -58,7 +57,6 @@ export const submitAnswer = async ({ gameId, playerId, questionIndex, answerLett
       correct: isCorrect,
       submittedAt: serverTimestamp()
     });
-
     console.log("Answer submitted:", answerLetter);
   } catch (error) {
     console.error("Error submitting answer:", error);

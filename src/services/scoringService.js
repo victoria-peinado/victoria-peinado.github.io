@@ -1,34 +1,45 @@
 import { collection, doc, getDocs, query, where, writeBatch, increment } from 'firebase/firestore';
 import { db } from '../firebase';
-// No longer import ADMIN_USER_ID
 
 /**
  * Calculate and update scores for all players who answered the current question
  * @param {string} gameId - The current game session ID
  * @param {number} questionIndex - The current question index
- * @returns {Promise<number>} - Number of players who scored points
+ * @param {Object} questionStartTime - Firestore timestamp when question started
+ * @param {number} questionDuration - Duration in seconds
+ * @returns {Promise} - Number of players who scored points
  */
-export async function calculateAndUpdateScores(gameId, questionIndex) {
+export async function calculateAndUpdateScores(gameId, questionIndex, questionStartTime, questionDuration) {
   try {
     // Step 1: Get all answers for current question
-    // NEW PATH
     const answersRef = collection(db, `gameSessions/${gameId}/answers`);
     const answersQuery = query(answersRef, where('questionIndex', '==', questionIndex));
     const answersSnapshot = await getDocs(answersQuery);
 
-    // Step 2: Filter correct answers and collect timing data
+    // Calculate cutoff time
+    const startTimeMs = questionStartTime.toMillis ? questionStartTime.toMillis() : questionStartTime;
+    const cutoffTimeMs = startTimeMs + (questionDuration * 1000);
+
+    console.log(`Question started at: ${startTimeMs}, cutoff at: ${cutoffTimeMs}`);
+
+    // Step 2: Filter correct answers submitted within time limit
     const correctAnswers = [];
     answersSnapshot.forEach((doc) => {
       const answerData = doc.data();
-      if (answerData.correct) {
+      const submittedAtMs = answerData.submittedAt?.toMillis() || 0;
+
+      // Only score answers that are correct AND submitted within time limit
+      if (answerData.correct && submittedAtMs <= cutoffTimeMs) {
         correctAnswers.push({
           playerId: answerData.playerId,
-          submittedAt: answerData.submittedAt?.toMillis() || 0
+          submittedAt: submittedAtMs
         });
+      } else if (answerData.correct && submittedAtMs > cutoffTimeMs) {
+        console.log(`Player ${answerData.playerId} answered too late (${submittedAtMs - cutoffTimeMs}ms over)`);
       }
     });
 
-    console.log(`Found ${correctAnswers.length} correct answers for question ${questionIndex}`);
+    console.log(`Found ${correctAnswers.length} valid correct answers for question ${questionIndex}`);
 
     // If no correct answers, nothing to do
     if (correctAnswers.length === 0) {
@@ -43,7 +54,6 @@ export async function calculateAndUpdateScores(gameId, questionIndex) {
 
     // Step 4: Calculate points for each player and batch update
     const batch = writeBatch(db);
-    
     correctAnswers.forEach((answer) => {
       // Calculate speed bonus (0 to 40 points based on relative speed)
       const speedRatio = (slowestTime - answer.submittedAt) / timeRange;
@@ -53,7 +63,6 @@ export async function calculateAndUpdateScores(gameId, questionIndex) {
       console.log(`Player ${answer.playerId}: ${pointsEarned} points (base: 100, speed bonus: ${speedBonus})`);
 
       // Update player's total score
-      // NEW PATH
       const playerRef = doc(db, `gameSessions/${gameId}/players/${answer.playerId}`);
       batch.update(playerRef, {
         score: increment(pointsEarned)
@@ -63,7 +72,6 @@ export async function calculateAndUpdateScores(gameId, questionIndex) {
     // Step 5: Commit all score updates atomically
     await batch.commit();
     console.log(`Successfully updated scores for ${correctAnswers.length} players`);
-
     return correctAnswers.length;
 
   } catch (error) {
@@ -79,11 +87,11 @@ export async function calculateAndUpdateScores(gameId, questionIndex) {
  */
 export function getScoringStats(times) {
   if (times.length === 0) return null;
-  
+
   const fastestTime = Math.min(...times);
   const slowestTime = Math.max(...times);
   const avgTime = times.reduce((a, b) => a + b, 0) / times.length;
-  
+
   return {
     fastestTime,
     slowestTime,
