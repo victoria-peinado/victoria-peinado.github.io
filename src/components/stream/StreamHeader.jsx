@@ -3,8 +3,9 @@ import React from 'react';
 import QRCode from 'react-qr-code';
 
 function StreamHeader({ gamePin }) {
-  // 1. FIX: Added the /#/ to make this link HashRouter-compatible.
-  const joinUrl = `https://magictrivia.org/#/?pin=${gamePin}`;
+  // 1. FIX: This is the simple, correct URL.
+  // The '?' goes *before* the '#' that the router will add.
+  const joinUrl = `https://magictrivia.org/?pin=${gamePin}`;
 
   return (
     <div className="absolute top-0 left-0 right-0 p-6 flex justify-between items-start z-10">

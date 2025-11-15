@@ -1,7 +1,6 @@
 // src/App.jsx
 import React, { useEffect } from 'react';
-// 1. Import useLocation and useNavigate
-import { HashRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { HashRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 
 // Import Layout Components
 import ProtectedRoute from './components/layout/ProtectedRoute';
@@ -22,27 +21,27 @@ import AdminGame from './pages/AdminGame';
 import AdminQuestionBanks from './pages/AdminQuestionBanks';
 
 /**
- * 2. UPDATED HELPER COMPONENT
- * This now uses useNavigate for a more reliable URL clean-up.
+ * 2. NEW HELPER COMPONENT
+ * This runs ONCE on app load to check the main window URL.
  */
 function PinUrlCatcher() {
-  const location = useLocation();
-  const navigate = useNavigate(); // 3. Get navigate function
-
   useEffect(() => {
-    // This `location.search` will now correctly read from the hash
-    const params = new URLSearchParams(location.search);
+    // 1. Check the *actual* browser URL search string (e.g., ?pin=m7qpN)
+    const params = new URLSearchParams(window.location.search);
     const pin = params.get('pin');
 
     if (pin) {
-      // 4. Found a PIN! Save it to session storage.
+      // 2. Found a PIN! Save it to session storage.
       sessionStorage.setItem('gamePin', pin);
 
-      // 5. Use navigate to clean the URL (removes the ?pin=... part)
-      // This replaces the history entry without a page reload.
-      navigate(location.pathname, { replace: true }); 
+      // 3. Clean the URL so it's not visible anymore.
+      // We get the current hash path (e.g., '#/join')
+      const hash = window.location.hash; 
+      // We replace the browser history to remove the ?pin=...
+      // The new URL will be just "https://magictrivia.org/#/join"
+      window.history.replaceState(null, '', `/${hash}`);
     }
-  }, [location, navigate]); // 6. Add navigate to dependency array
+  }, []); // 4. Empty array means this runs only ONCE on initial app load
 
   return null; // This component renders nothing
 }
@@ -51,7 +50,7 @@ function PinUrlCatcher() {
 export default function App() {
   return (
     <HashRouter>
-      {/* 7. The PinUrlCatcher stays here */}
+      {/* 5. Add the PinUrlCatcher here */}
       <PinUrlCatcher />
 
       <Routes>
@@ -96,7 +95,7 @@ export default function App() {
           <Route path="/play" element={<Navigate to="/join" replace />} />
           <Route path="/play/:gameId" element={<PlayerPage />} />
           <Route path="/stream/:gameId" element={<StreamPage />} />
-        </Route> {/* <-- 8. FIXED TYPO HERE */}
+        </Route>
       </Routes>
     </HashRouter>
   );
