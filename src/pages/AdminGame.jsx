@@ -21,7 +21,9 @@ export default function AdminGame() {
   // 1. Add state for copy button feedback
   const [copied, setCopied] = useState(false);
 
-  // ... (handleMessage, useEffect, handleTimerExpire, etc. are unchanged) ...
+  // --- 1. ADD STATE FOR BROADCAST INPUT ---
+  const [broadcastInput, setBroadcastInput] = useState('');
+
   const handleMessage = (text, type, duration = 3000) => {
     setMessage({ text, type });
     setTimeout(() => setMessage({ text: '', type: '' }), duration);
@@ -124,6 +126,23 @@ export default function AdminGame() {
       handleMessage('Failed to copy link.', 'error');
     });
   };
+  
+  // --- 2. ADD HANDLER FOR SENDING BROADCAST ---
+  const handleSendBroadcast = async (e) => {
+    e.preventDefault();
+    if (!broadcastInput.trim()) return;
+
+    setIsBusy(true);
+    try {
+      await gameService.sendBroadcast(gameId, broadcastInput.trim());
+      handleMessage('Broadcast sent to all players!', 'success');
+      setBroadcastInput(''); // Clear input on success
+    } catch (error) {
+      handleMessage(error.message, 'error');
+    } finally {
+      setIsBusy(false);
+    }
+  };
 
 
   return (
@@ -179,6 +198,29 @@ export default function AdminGame() {
         </div>
       </div>
       {/* End of Share Game Card */}
+
+      {/* --- 3. ADDED: Send Broadcast Card --- */}
+      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+        <h2 className="text-2xl font-bold mb-4">Send Broadcast to All Players</h2>
+        <form onSubmit={handleSendBroadcast} className="flex flex-col sm:flex-row gap-2">
+          <input
+            type="text"
+            value={broadcastInput}
+            onChange={(e) => setBroadcastInput(e.target.value)}
+            placeholder="Type your message here..."
+            className="flex-grow p-2 border border-gray-300 rounded"
+            disabled={isBusy}
+          />
+          <button
+            type="submit"
+            className="px-4 py-2 font-bold text-white rounded bg-purple-600 hover:bg-purple-700 transition-all"
+            disabled={isBusy}
+          >
+            {isBusy ? 'Sending...' : 'Send'}
+          </button>
+        </form>
+      </div>
+      {/* --- End of Send Broadcast Card --- */}
 
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

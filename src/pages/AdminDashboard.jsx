@@ -5,6 +5,7 @@ import * as bankService from '../services/bankService';
 import * as gameService from '../services/gameService';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
+import ConfirmModal from '../components/common/ConfirmModal'; // <-- 1. ADDED IMPORT
 
 export default function AdminDashboard() {
   const { currentUser } = useAuth();
@@ -15,6 +16,11 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState({ text: '', type: '' });
   const [questionCounts, setQuestionCounts] = useState({});
+
+  // --- 2. ADDED NEW STATE ---
+  const [newGameName, setNewGameName] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [gameToDelete, setGameToDelete] = useState(null);
 
   const handleMessage = (text, type, duration = 3000) => {
     setMessage({ text, type });
@@ -75,8 +81,39 @@ export default function AdminDashboard() {
     }
   }, [currentUser]);
 
+  // --- 3. ADDED DELETE HANDLERS ---
+  const handleDeleteClick = (gameId) => {
+    setGameToDelete(gameId);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setGameToDelete(null);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!gameToDelete) return;
+    
+    try {
+      await gameService.deleteGame(gameToDelete);
+      setGames(games.filter(game => game.id !== gameToDelete));
+      handleMessage('Game deleted successfully', 'success');
+      handleCloseModal();
+    } catch (error) {
+      console.error('Error deleting game:', error);
+      handleMessage(error.message, 'error');
+      handleCloseModal();
+    }
+  };
+
+  // --- 4. UPDATED handleCreateGame ---
   const handleCreateGame = async (e) => {
     e.preventDefault();
+    if (!newGameName) { // <-- Added check for game name
+      handleMessage('Please enter a game name', 'error');
+      return;
+    }
     if (!selectedBankId) {
       handleMessage('Please select a question bank', 'error');
       return;
@@ -89,8 +126,10 @@ export default function AdminDashboard() {
     }
 
     try {
-      const gameId = await gameService.createNewGame(currentUser.uid, selectedBankId);
+      // Pass newGameName to the service function
+      const gameId = await gameService.createNewGame(currentUser.uid, selectedBankId, newGameName);
       handleMessage('Game created successfully!', 'success');
+      setNewGameName(''); // <-- Clear the input on success
       navigate(`/admin/game/${gameId}`);
     } catch (error) {
       console.error('Error creating game:', error);
@@ -102,9 +141,9 @@ export default function AdminDashboard() {
     navigate(`/admin/game/${gameId}`);
   };
 
-  const handleOpenStream = (gameId) => {
-    window.open(`/stream/${gameId}`, '_blank');
-  };
+  // const handleOpenStream = (gameId) => { // No longer used here
+  //   window.open(`/stream/${gameId}`, '_blank');
+  // };
 
   // Helper function to get bank display name (handles both old and new formats)
   const getBankDisplayName = (bank) => {
@@ -121,6 +160,7 @@ export default function AdminDashboard() {
     );
   }
 
+  // --- 5. UPDATED JSX ---
   return (
     <div className="max-w-6xl mx-auto p-6">
       <div className="mb-6 flex justify-between items-center">
@@ -157,8 +197,25 @@ export default function AdminDashboard() {
             </Link>
           </div>
         ) : (
-          <form onSubmit={handleCreateGame} className="flex gap-4 items-end">
-            <div className="flex-1">
+          <form onSubmit={handleCreateGame} className="flex flex-wrap gap-4 items-end">
+            
+            {/* --- ADDED GAME NAME INPUT --- */}
+            <div className="flex-1 min-w-[200px]">
+              <label htmlFor="gameName" className="block text-sm font-medium text-gray-700 mb-2">
+                Game Name
+              </label>
+              <input
+                type="text"
+                id="gameName"
+                value={newGameName}
+                onChange={(e) => setNewGameName(e.target.value)}
+                className="w-full px-4 py-2 border rounded"
+                placeholder="e.g., Spring Trivia Night"
+              />
+            </div>
+            
+            {/* --- QUESTION BANK SELECTOR --- */}
+            <div className="flex-1 min-w-[200px]">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Select Question Bank
               </label>
@@ -175,9 +232,10 @@ export default function AdminDashboard() {
                 ))}
               </select>
             </div>
+            
             <button
               type="submit"
-              className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700"
+              className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 h-11"
             >
               Create Game
             </button>
@@ -201,8 +259,12 @@ export default function AdminDashboard() {
                 <div key={game.id} className="border rounded-lg p-4 hover:bg-gray-50">
                   <div className="flex justify-between items-center">
                     <div>
-                      <p className="font-semibold">
-                        Game PIN: <span className="text-blue-600 text-xl">{game.gamePin}</span>
+                      {/* --- ADDED GAME NAME DISPLAY --- */}
+                      <p className="font-bold text-lg">
+                        {game.gameName || 'Untitled Game'}
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        Game PIN: <span className="text-blue-600 font-semibold">{game.gamePin}</span>
                       </p>
                       <p className="text-sm text-gray-600">Bank: {bankName}</p>
                       <p className="text-sm text-gray-600">
@@ -219,11 +281,15 @@ export default function AdminDashboard() {
                       >
                         Manage
                       </button>
+                      
+                      {/* --- "Open Stream" BUTTON REMOVED --- */}
+                      
+                      {/* --- ADDED "Delete" BUTTON --- */}
                       <button
-                        onClick={() => handleOpenStream(game.id)}
-                        className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700"
+                        onClick={() => handleDeleteClick(game.id)}
+                        className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
                       >
-                        Open Stream
+                        Delete
                       </button>
                     </div>
                   </div>
@@ -233,6 +299,17 @@ export default function AdminDashboard() {
           </div>
         )}
       </div>
+
+      {/* --- ADDED THE MODAL COMPONENT --- */}
+      <ConfirmModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        onConfirm={handleConfirmDelete}
+        title="Delete Game?"
+        message="Are you sure you want to delete this game? This action cannot be undone and all player data will be lost."
+        confirmText="Delete"
+        confirmVariant="danger"
+      />
     </div>
   );
 }

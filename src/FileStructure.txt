@@ -72,6 +72,7 @@
     +---pages
     |       AdminDashboard.jsx
     |       AdminGame.jsx
+    |       AdminQuestionBankEdit.jsx
     |       AdminQuestionBanks.jsx
     |       LandingPage.jsx
     |       LoginPage.jsx

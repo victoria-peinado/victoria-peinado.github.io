@@ -1,12 +1,14 @@
 // src/pages/PlayerPage.jsx
-import React, { useState, useEffect } from 'react';
-import { useParams, useLocation } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react'; // <-- 1. IMPORT useRef
+// --- 1. IMPORT useNavigate ---
+import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { useGameSession } from '../hooks/useGameSession';
 import { useQuestionBank } from '../hooks/useQuestionBank';
 import { useAuth } from '../contexts/AuthContext';
 import * as playerService from '../services/playerService';
 import { db } from '../firebase';
-import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
+// --- 2. IMPORT onSnapshot ---
+import { collection, query, where, getDocs, doc, getDoc, onSnapshot } from 'firebase/firestore';
 import PlayerJoinForm from '../components/player/PlayerJoinForm';
 import PlayerWaitingView from '../components/player/PlayerWaitingView';
 import PlayerQuestionView from '../components/player/PlayerQuestionView';
@@ -18,10 +20,45 @@ import LoadingScreen from '../components/common/LoadingScreen';
 import ErrorScreen from '../components/common/ErrorScreen';
 import PlayerNavbar from '../components/layout/PlayerNavbar';
 
+// --- 2. CREATE A NEW COMPONENT FOR THE MESSAGE OVERLAY ---
+function AdminMessageOverlay({ message, onClose }) {
+  if (!message) return null;
+
+  const isBroadcast = message.type === 'broadcast';
+  
+  return (
+    <div 
+      className="fixed inset-0 bg-black bg-opacity-70 z-40 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white text-gray-900 w-full max-w-md p-6 rounded-2xl shadow-2xl border-4 border-purple-500 z-50"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 className="text-3xl font-bold mb-4">
+          {isBroadcast ? 'Broadcast from Admin' : 'Direct Message'}
+        </h2>
+        <p className="text-gray-700 text-lg mb-6">{message.text}</p>
+        
+        <div className="flex justify-end">
+          <button
+            onClick={onClose}
+            className="px-6 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-semibold transition"
+          >
+            Got it
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
 export default function PlayerPage() {
   const { gameId } = useParams();
   const { currentUser, loading: authLoading } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate(); // <-- 3. INITIALIZE NAVIGATE
   const [playerId, setPlayerId] = useState(null);
   const [nickname, setNickname] = useState(location.state?.nickname || '');
   const [isJoining, setIsJoining] = useState(false);
@@ -31,6 +68,11 @@ export default function PlayerPage() {
   const [selectedAnswer, setSelectedAnswer] = useState(null);
   const [hasAnswered, setHasAnswered] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // --- 3. ADD STATE FOR ADMIN MESSAGES ---
+  const [adminMessage, setAdminMessage] = useState(null); // e.g., { text: '...', type: 'broadcast' }
+  const lastBroadcastTimestamp = useRef(null);
+  const lastDirectMessageTimestamp = useRef(null);
 
   // ... (all other useEffects and handlers are unchanged) ...
   useEffect(() => {
@@ -115,6 +157,85 @@ export default function PlayerPage() {
 
     checkExistingPlayer();
   }, [gameSession, gameLoading, currentUser, authLoading, gameId]);
+
+  // --- 4. UPDATE KICK/MESSAGE LISTENER ---
+  useEffect(() => {
+    // Only run this listener if we have a valid gameId and playerId
+    if (!gameId || !playerId) return;
+
+    const playerRef = doc(db, `gameSessions/${gameId}/players/${playerId}`);
+    
+    const unsubscribe = onSnapshot(playerRef, (doc) => {
+      if (doc.exists()) {
+        const playerData = doc.data();
+        
+        // --- KICK LOGIC ---
+        if (playerData.isKicked === true) {
+          console.log("Kicked by admin. Redirecting...");
+          
+          // Clear local storage so they can't rejoin
+          localStorage.removeItem('triviaPlayerId');
+          localStorage.removeItem('triviaNickname');
+          localStorage.removeItem('triviaGameId');
+          
+          // Redirect to the homepage with a message
+          navigate('/', { 
+            state: { 
+              message: "You have been kicked from the game by the admin." 
+            } 
+          });
+          return; // Stop processing if kicked
+        }
+        
+        // --- DIRECT MESSAGE LOGIC ---
+        if (playerData.directMessage && playerData.directMessage.sentAt) {
+          const newTimestamp = playerData.directMessage.sentAt?.seconds;
+          // Check if it's a new message
+          if (newTimestamp > (lastDirectMessageTimestamp.current || 0)) {
+            console.log("New direct message received");
+            setAdminMessage({
+              text: playerData.directMessage.message,
+              type: 'direct'
+            });
+            lastDirectMessageTimestamp.current = newTimestamp;
+          }
+        }
+
+      } else {
+        // Player document was deleted (e.g., game deleted)
+        console.log("Player document not found. Redirecting...");
+        navigate('/', { 
+          state: { 
+            message: "The game session has ended." 
+          } 
+        });
+      }
+    }, (error) => {
+      console.error("Error listening to player document:", error);
+    });
+
+    // Cleanup the listener when the component unmounts or deps change
+    return () => unsubscribe();
+
+  }, [gameId, playerId, navigate]); // Add dependencies
+
+  // --- 5. ADD NEW useEffect TO LISTEN FOR BROADCASTS ---
+  useEffect(() => {
+    // We get gameSession from the useGameSession hook
+    if (gameSession && gameSession.broadcastMessage && gameSession.broadcastMessage.sentAt) {
+      const newTimestamp = gameSession.broadcastMessage.sentAt?.seconds;
+      
+      // Check if it's a new message
+      if (newTimestamp > (lastBroadcastTimestamp.current || 0)) {
+        console.log("New broadcast message received");
+        setAdminMessage({
+          text: gameSession.broadcastMessage.message,
+          type: 'broadcast'
+        });
+        lastBroadcastTimestamp.current = newTimestamp;
+      }
+    }
+  }, [gameSession]); // This runs every time gameSession updates
 
   const handleMessage = (text, type, duration = 3000) => {
     setMessage({ text, type });
@@ -278,8 +399,15 @@ export default function PlayerPage() {
     }
   };
 
+  // --- 6. UPDATE FINAL RETURN TO INCLUDE THE OVERLAY ---
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-600 to-blue-500 p-8">
+      {/* --- ADD THE OVERLAY --- */}
+      <AdminMessageOverlay 
+        message={adminMessage} 
+        onClose={() => setAdminMessage(null)} 
+      />
+      
       <PlayerNavbar />
       <div className="max-w-4xl mx-auto mt-4">
         {message.text && (
