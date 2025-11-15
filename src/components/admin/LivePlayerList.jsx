@@ -1,6 +1,8 @@
+// src/components/admin/LivePlayerList.jsx
 import React, { useState, useEffect } from 'react';
 import { db } from '../../firebase';
-import { collection, onSnapshot, query } from 'firebase/firestore';
+// NEW: Import 'where'
+import { collection, onSnapshot, query, where } from 'firebase/firestore';
 
 export default function LivePlayerList({ gameId }) {
   const [players, setPlayers] = useState([]);
@@ -13,7 +15,8 @@ export default function LivePlayerList({ gameId }) {
     }
 
     const playersRef = collection(db, `gameSessions/${gameId}/players`);
-    const q = query(playersRef);
+    // UPDATED: Add 'where' clause to only show players who have not exited
+    const q = query(playersRef, where("hasExited", "==", false));
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const playersData = snapshot.docs.map(doc => ({
@@ -21,6 +24,9 @@ export default function LivePlayerList({ gameId }) {
         ...doc.data()
       }));
       setPlayers(playersData);
+      setLoading(false);
+    }, (error) => { // Add error handling
+      console.error("Error fetching live players:", error);
       setLoading(false);
     });
 

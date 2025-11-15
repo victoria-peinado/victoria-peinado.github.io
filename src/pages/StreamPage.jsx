@@ -8,6 +8,8 @@ import StreamAnswerView from '../components/stream/StreamAnswerView';
 import Leaderboard from '../components/common/Leaderboard';
 import LoadingScreen from '../components/common/LoadingScreen';
 import ErrorScreen from '../components/common/ErrorScreen';
+import StreamHeader from '../components/stream/StreamHeader';
+import FinalLeaderboard from '../components/common/FinalLeaderboard'; // 1. Import FinalLeaderboard
 
 export default function StreamPage() {
   const { gameId } = useParams();
@@ -29,7 +31,7 @@ export default function StreamPage() {
   const renderGameState = () => {
     switch (gameSession.state) {
       case 'waiting':
-        return <StreamWaitingView gamePin={gameSession.gamePin} />;
+        return <StreamWaitingView gamePin={gameSession.gamePin} />; 
       
       case 'questionactive':
         return <StreamQuestionView gameSession={gameSession} questions={questions} />;
@@ -39,7 +41,7 @@ export default function StreamPage() {
       
       case 'leaderboard':
         return (
-          <div className="text-center">
+          <div className="text-center mt-48"> 
             <h2 className="text-5xl font-bold text-white mb-8">Leaderboard</h2>
             <Leaderboard gameId={gameSession.id} />
           </div>
@@ -47,16 +49,15 @@ export default function StreamPage() {
       
       case 'finished':
         return (
-          <div className="text-center">
-            <h1 className="text-6xl font-bold text-white mb-8">Game Over!</h1>
-            <p className="text-3xl text-white mb-8">Until next time!</p>
-            <Leaderboard gameId={gameSession.id} />
+          <div className="text-center mt-48">
+            {/* 2. Render FinalLeaderboard here instead of the regular one */}
+            <FinalLeaderboard gameId={gameSession.id} />
           </div>
         );
       
       default:
         return (
-          <div className="text-center text-white">
+          <div className="text-center text-white mt-48"> 
             <p className="text-2xl">Unknown game state: {gameSession.state}</p>
           </div>
         );
@@ -64,7 +65,10 @@ export default function StreamPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-600 to-blue-500 flex items-center justify-center p-8">
+    <div className="min-h-screen bg-gradient-to-br from-purple-600 to-blue-500 flex items-center justify-center p-8 relative">
+      
+      <StreamHeader gamePin={gameSession.gamePin || gameId} />
+
       <div className="w-full max-w-6xl">
         {renderGameState()}
       </div>

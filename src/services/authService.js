@@ -5,6 +5,7 @@ import {
   signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
+  sendPasswordResetEmail, // <-- NEW: Import
 } from 'firebase/auth';
 
 /**
@@ -34,4 +35,12 @@ export const logout = () => {
  */
 export const onAuthChange = (callback) => {
   return onAuthStateChanged(auth, callback);
+};
+
+/**
+* NEW: Sends a password reset email to the given email address.
+*
+*/
+export const sendPasswordReset = (email) => {
+  return sendPasswordResetEmail(auth, email);
 };

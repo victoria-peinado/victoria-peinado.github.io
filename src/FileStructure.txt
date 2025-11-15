@@ -8,10 +8,12 @@
 \---src
     |   App.css
     |   App.jsx
+    |   FileStructure.txt
     |   firebase.js
     |   index.css
     |   Leaderboard.jsx
     |   main.jsx
+    |   SampleBank.csv
     |
     +---.vs
     |   |   ProjectSettings.json
@@ -31,16 +33,20 @@
     |   |       LivePlayerList.jsx
     |   |
     |   +---common
+    |   |       ConfirmModal.jsx
     |   |       ErrorScreen.jsx
+    |   |       FinalLeaderboard.jsx
     |   |       Leaderboard.jsx
     |   |       LoadingScreen.jsx
     |   |       LoadingSpinner.jsx
+    |   |       PasswordResetModal.jsx
     |   |       Timer.jsx
     |   |
     |   +---layout
     |   |       KioskLayout.jsx
     |   |       MainLayout.jsx
     |   |       Navbar.jsx
+    |   |       PlayerNavbar.jsx
     |   |       ProtectedRoute.jsx
     |   |
     |   +---player
@@ -58,7 +64,6 @@
     |       AuthContext.jsx
     |
     +---hooks
-    |       useAuth.js
     |       useGameSession.js
     |       useLeaderboard.js
     |       useQuestionBank.js

@@ -1,3 +1,4 @@
+// src/pages/PlayerPage.jsx
 import React, { useState, useEffect } from 'react';
 import { useParams, useLocation } from 'react-router-dom';
 import { useGameSession } from '../hooks/useGameSession';
@@ -13,6 +14,7 @@ import PlayerAnswerView from '../components/player/PlayerAnswerView';
 import Leaderboard from '../components/common/Leaderboard';
 import LoadingScreen from '../components/common/LoadingScreen';
 import ErrorScreen from '../components/common/ErrorScreen';
+import PlayerNavbar from '../components/layout/PlayerNavbar';
 
 export default function PlayerPage() {
   const { gameId } = useParams();
@@ -89,11 +91,26 @@ export default function PlayerPage() {
           const playerRef = doc(db, `gameSessions/${gameId}/players/${savedPlayerId}`);
           const playerSnap = await getDoc(playerRef);
           
+          // --- FIX IS HERE ---
           if (playerSnap.exists()) {
-            console.log("Found existing player for THIS game:", savedPlayerId);
-            setPlayerId(savedPlayerId);
-            setNickname(savedNickname);
+            const playerData = playerSnap.data();
+            // Check if player was flagged as exited
+            if (playerData.hasExited === true) {
+              console.log("Player has exited, clearing localStorage and blocking rejoin");
+              localStorage.removeItem('triviaPlayerId');
+              localStorage.removeItem('triviaNickname');
+              localStorage.removeItem('triviaGameId');
+              // Player is kicked out, setPlayerId(null) will keep them on the join form
+              setPlayerId(null);
+            } else {
+              // Player is valid and has not exited, let them in
+              console.log("Found existing player for THIS game:", savedPlayerId);
+              setPlayerId(savedPlayerId);
+              setNickname(savedNickname);
+            }
+            // --- END FIX ---
           } else {
+            // Player doc doesn't exist, clear storage
             console.log("Player doc doesn't exist in THIS game, clearing localStorage");
             localStorage.removeItem('triviaPlayerId');
             localStorage.removeItem('triviaNickname');
@@ -192,7 +209,8 @@ export default function PlayerPage() {
   if (!playerId) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-600 to-blue-500 p-8">
-        <div className="max-w-md mx-auto">
+        <PlayerNavbar /> 
+        <div className="max-w-md mx-auto mt-4">
           {message.text && (
             <div className={`mb-4 p-4 rounded ${message.type === 'error' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
               {message.text}
@@ -267,7 +285,8 @@ export default function PlayerPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-600 to-blue-500 p-8">
-      <div className="max-w-4xl mx-auto">
+      <PlayerNavbar />
+      <div className="max-w-4xl mx-auto mt-4">
         {message.text && (
           <div className={`mb-4 p-4 rounded ${message.type === 'error' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
             {message.text}

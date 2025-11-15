@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../../firebase';
 import { collection, query, orderBy, onSnapshot, limit } from 'firebase/firestore';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LabelList } from 'recharts'; // 1. Import LabelList
 
 export default function Leaderboard({ gameId }) {
   const [leaderboard, setLeaderboard] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // ... (useEffect logic is unchanged) ...
     if (!gameId) {
       setLoading(false);
       return;
@@ -36,9 +37,10 @@ export default function Leaderboard({ gameId }) {
     return () => unsubscribe();
   }, [gameId]);
 
+  // ... (loading and empty states are unchanged) ...
   if (loading) {
     return (
-      <div className="text-center text-white">
+      <div className="text-center text-white p-8">
         <p className="text-xl">Loading leaderboard...</p>
       </div>
     );
@@ -46,13 +48,14 @@ export default function Leaderboard({ gameId }) {
 
   if (leaderboard.length === 0) {
     return (
-      <div className="bg-white bg-opacity-10 rounded-lg p-8 text-center">
-        <p className="text-white text-xl">No players yet!</p>
+      <div className="bg-black bg-opacity-30 rounded-lg p-12 text-center">
+        <p className="text-white text-2xl font-light">
+          No players have scored yet!
+        </p>
       </div>
     );
   }
 
-  // Prepare data for chart
   const chartData = leaderboard.map((player, index) => ({
     name: player.nickname,
     score: player.score || 0,
@@ -60,33 +63,42 @@ export default function Leaderboard({ gameId }) {
   }));
 
   const getBarColor = (rank) => {
+    // ... (getBarColor logic is unchanged) ...
     switch(rank) {
-      case 1: return '#fbbf24'; // Gold
-      case 2: return '#9ca3af'; // Silver
-      case 3: return '#fb923c'; // Bronze
-      default: return '#60a5fa'; // Blue
+      case 1: return '#fbbf24'; 
+      case 2: return '#c0c0c0'; 
+      case 3: return '#cd7f32'; 
+      default: return '#3b82f6';
     }
   };
 
   return (
-    <div className="bg-white bg-opacity-10 rounded-lg p-6 w-full max-w-4xl mx-auto">
-      <h2 className="text-3xl font-bold text-white mb-6 text-center">
+    <div className="bg-black bg-opacity-30 rounded-lg p-6 w-full max-w-4xl mx-auto backdrop-blur-sm">
+      <h2 className="text-4xl font-bold text-white mb-8 text-center">
         Current Standings
       </h2>
-      <ResponsiveContainer width="100%" height={Math.max(400, leaderboard.length * 50)}>
+      
+      {/* 2. Set fixed height and remove layout="vertical" */}
+      <ResponsiveContainer width="100%" height={400}>
         <BarChart 
           data={chartData} 
-          layout="vertical"
-          margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+          margin={{ top: 30, right: 30, left: 20, bottom: 5 }} // 3. Give space for top label
         >
-          <CartesianGrid strokeDasharray="3 3" stroke="#ffffff30" />
-          <XAxis type="number" stroke="#ffffff" />
-          <YAxis 
-            type="category" 
+          <CartesianGrid strokeDasharray="3 3" stroke="#ffffff30" vertical={false} />
+          
+          {/* 4. XAxis is now 'name' (category) */}
+          <XAxis 
             dataKey="name" 
-            stroke="#ffffff"
-            width={150}
+            stroke="#ffffff" 
+            tick={{ fill: '#ffffff' }}
           />
+          
+          {/* 5. YAxis is now for score (number) */}
+          <YAxis 
+            stroke="#ffffff" 
+            tick={{ fill: '#ffffff' }}
+          />
+
           <Tooltip 
             contentStyle={{ 
               backgroundColor: '#1f2937', 
@@ -94,11 +106,19 @@ export default function Leaderboard({ gameId }) {
               borderRadius: '8px',
               color: '#ffffff'
             }}
+            cursor={{ fill: '#ffffff10' }}
           />
-          <Bar dataKey="score" radius={[0, 8, 8, 0]}>
+          <Bar dataKey="score" radius={[8, 8, 0, 0]}> {/* 6. Update radius for vertical bars */}
             {chartData.map((entry, index) => (
               <Cell key={`cell-${index}`} fill={getBarColor(entry.rank)} />
             ))}
+            
+            {/* 7. Add score labels to the top of each bar */}
+            <LabelList 
+              dataKey="score" 
+              position="top" 
+              style={{ fill: '#ffffff', fontSize: '14px' }} 
+            />
           </Bar>
         </BarChart>
       </ResponsiveContainer>

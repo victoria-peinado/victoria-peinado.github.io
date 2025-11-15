@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../../firebase';
 import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LabelList } from 'recharts';
 
 export default function FinalLeaderboard({ gameId }) {
   const [players, setPlayers] = useState([]);
@@ -75,7 +75,7 @@ export default function FinalLeaderboard({ gameId }) {
         </p>
       </div>
 
-      {/* Podium for Top 3 */}
+      {/* Podium for Top 3 (Size and Text Fixed) */}
       {topThree.length > 0 && (
         <div className="mb-12">
           <h2 className="text-3xl font-bold text-center text-white mb-8">
@@ -89,16 +89,16 @@ export default function FinalLeaderboard({ gameId }) {
                 <div className="text-6xl mb-2">{getMedalEmoji(2)}</div>
                 <div style={{
                   background: 'linear-gradient(to bottom, #d1d5db, #9ca3af)',
-                  height: '180px',
-                  width: '160px'
-                }} className="rounded-t-lg p-6 text-center shadow-xl">
-                  <div className="text-white font-bold text-xl mb-2 truncate">
+                  height: '150px',
+                  width: '150px'
+                }} className="rounded-t-lg p-4 text-center shadow-xl">
+                  <div className="text-black font-bold text-xl mb-2 truncate">
                     {topThree[1].nickname}
                   </div>
-                  <div className="text-white text-3xl font-bold">
+                  <div className="text-black text-3xl font-bold">
                     {topThree[1].score}
                   </div>
-                  <div className="text-gray-200 text-sm">points</div>
+                  <div className="text-gray-800 text-sm">points</div>
                 </div>
                 <div className="bg-gray-400 w-full h-8 rounded-b-lg flex items-center justify-center text-white font-bold">
                   2nd
@@ -112,16 +112,16 @@ export default function FinalLeaderboard({ gameId }) {
                 <div className="text-7xl mb-2">{getMedalEmoji(1)}</div>
                 <div style={{
                   background: 'linear-gradient(to bottom, #fde047, #eab308)',
-                  height: '220px',
-                  width: '180px'
-                }} className="rounded-t-lg p-6 text-center shadow-2xl">
-                  <div className="text-yellow-900 font-bold text-2xl mb-2 truncate">
+                  height: '180px',
+                  width: '170px'
+                }} className="rounded-t-lg p-4 text-center shadow-2xl">
+                  <div className="text-black font-bold text-2xl mb-2 truncate">
                     {topThree[0].nickname}
                   </div>
-                  <div className="text-yellow-900 text-4xl font-bold">
+                  <div className="text-black text-4xl font-bold">
                     {topThree[0].score}
                   </div>
-                  <div className="text-yellow-800 text-sm">points</div>
+                  <div className="text-gray-900 text-sm">points</div>
                 </div>
                 <div style={{ background: '#eab308' }} className="w-full h-10 rounded-b-lg flex items-center justify-center text-yellow-900 font-bold text-lg">
                   WINNER
@@ -135,16 +135,16 @@ export default function FinalLeaderboard({ gameId }) {
                 <div className="text-6xl mb-2">{getMedalEmoji(3)}</div>
                 <div style={{
                   background: 'linear-gradient(to bottom, #fdba74, #f97316)',
-                  height: '150px',
-                  width: '160px'
-                }} className="rounded-t-lg p-6 text-center shadow-xl">
-                  <div className="text-white font-bold text-xl mb-2 truncate">
+                  height: '120px',
+                  width: '150px'
+                }} className="rounded-t-lg p-4 text-center shadow-xl">
+                  <div className="text-black font-bold text-xl mb-2 truncate">
                     {topThree[2].nickname}
                   </div>
-                  <div className="text-white text-3xl font-bold">
+                  <div className="text-black text-3xl font-bold">
                     {topThree[2].score}
                   </div>
-                  <div className="text-orange-200 text-sm">points</div>
+                  <div className="text-gray-800 text-sm">points</div>
                 </div>
                 <div style={{ background: '#f97316' }} className="w-full h-8 rounded-b-lg flex items-center justify-center text-white font-bold">
                   3rd
@@ -155,24 +155,28 @@ export default function FinalLeaderboard({ gameId }) {
         </div>
       )}
 
-      {/* Bar Chart */}
+      {/* Bar Chart (Scaling and Text Fixed) */}
       <div className="bg-white bg-opacity-10 rounded-lg p-6">
         <h3 className="text-2xl font-bold text-white mb-6 text-center">
           Final Scores
         </h3>
-        <ResponsiveContainer width="100%" height={Math.max(400, players.length * 50)}>
+        <ResponsiveContainer width="100%" height={400}>
           <BarChart 
             data={chartData} 
-            layout="vertical"
-            margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+            margin={{ top: 30, right: 30, left: 20, bottom: 20 }}
           >
-            <CartesianGrid strokeDasharray="3 3" stroke="#ffffff30" />
-            <XAxis type="number" stroke="#ffffff" />
-            <YAxis 
-              type="category" 
+            <CartesianGrid strokeDasharray="3 3" stroke="#ffffff30" vertical={false} />
+            <XAxis 
               dataKey="name" 
-              stroke="#ffffff"
-              width={150}
+              stroke="#ffffff" 
+              tick={{ fill: '#ffffff', fontSize: 12 }}
+              angle={-45}
+              textAnchor="end"
+              interval={'auto'}
+            />
+            <YAxis 
+              stroke="#ffffff" 
+              tick={{ fill: '#ffffff' }}
             />
             <Tooltip 
               contentStyle={{ 
@@ -182,10 +186,15 @@ export default function FinalLeaderboard({ gameId }) {
                 color: '#ffffff'
               }}
             />
-            <Bar dataKey="score" radius={[0, 8, 8, 0]}>
+            <Bar dataKey="score" radius={[8, 8, 0, 0]}>
               {chartData.map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={getBarColor(entry.rank)} />
               ))}
+              <LabelList 
+                dataKey="score" 
+                position="top" 
+                style={{ fill: '#000000', fontSize: '14px', fontWeight: 'bold' }} /* 1. TEXT FIXED TO BLACK */
+              />
             </Bar>
           </BarChart>
         </ResponsiveContainer>

@@ -1,3 +1,4 @@
+// src/App.jsx
 import React from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 
@@ -23,10 +24,9 @@ export default function App() {
   return (
     <HashRouter>
       <Routes>
-        {/* Routes WITH Navbar */}
+        {/* Routes WITH Main Navbar (Login, Admin, etc.) */}
         <Route element={<MainLayout />}>
           <Route path="/" element={<LandingPage />} />
-          <Route path="/join" element={<PlayerPinEntry />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
 
@@ -57,8 +57,11 @@ export default function App() {
           />
         </Route>
 
-        {/* Routes WITHOUT Navbar (Kiosk Mode) */}
+        {/* Routes WITHOUT Main Navbar (Player/Stream Kiosk Mode) */}
         <Route element={<KioskLayout />}>
+          {/* UPDATED: /join is now in KioskLayout */}
+          <Route path="/join" element={<PlayerPinEntry />} />
+          
           {/* Redirect /play to /join */}
           <Route path="/play" element={<Navigate to="/join" replace />} />
           <Route path="/play/:gameId" element={<PlayerPage />} />
