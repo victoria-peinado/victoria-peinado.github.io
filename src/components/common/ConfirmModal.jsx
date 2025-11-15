@@ -18,7 +18,8 @@ export default function ConfirmModal({
     : "bg-blue-600 hover:bg-blue-700";
 
   return (
-    // Modal Overlay
+    // Modal Overlay: This container fixes it to the viewport, 
+    // covers the screen (inset-0), and uses flex to center its child.
     <div 
       className="fixed inset-0 bg-black bg-opacity-70 z-40 flex items-center justify-center p-4"
       onClick={onClose}

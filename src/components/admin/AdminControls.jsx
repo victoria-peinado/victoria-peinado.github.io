@@ -36,14 +36,14 @@ function AdminControls({
           disabled={isBusy || gameState === 'finished'}
           className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition duration-200"
         >
-          🏁 End Game
+          End Game
         </button>
       </div>
 
       {gameState === 'questionactive' && (
         <div className="mt-4 p-4 bg-blue-100 rounded-lg">
           <p className="text-blue-800 font-semibold text-center">
-            ⏱️ Timer is running...
+            Timer is running...
           </p>
         </div>
       )}
@@ -51,7 +51,7 @@ function AdminControls({
       {gameState === 'finished' && (
         <div className="mt-4 p-4 bg-green-100 rounded-lg">
           <p className="text-green-800 font-semibold text-center">
-            ✓ Game has ended!
+            Game has ended!
           </p>
         </div>
       )}

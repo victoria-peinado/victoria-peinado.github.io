@@ -17,7 +17,11 @@ export default function AdminGame() {
   const [isBusy, setIsBusy] = useState(false);
   const [message, setMessage] = useState({ text: '', type: '' });
   const [autoRevealTriggered, setAutoRevealTriggered] = useState(false);
+  
+  // 1. Add state for copy button feedback
+  const [copied, setCopied] = useState(false);
 
+  // ... (handleMessage, useEffect, handleTimerExpire, etc. are unchanged) ...
   const handleMessage = (text, type, duration = 3000) => {
     setMessage({ text, type });
     setTimeout(() => setMessage({ text: '', type: '' }), duration);
@@ -54,7 +58,7 @@ export default function AdminGame() {
         gameSession.id,
         gameSession.currentQuestionIndex,
         gameSession.state,
-        questions // ADDED: Pass questions array
+        questions 
       );
       handleMessage('Question is now live!', 'success', 2000);
     } catch (error) {
@@ -94,6 +98,7 @@ export default function AdminGame() {
     }
   };
 
+
   if (gameLoading || questionsLoading) {
     return <LoadingScreen message="Loading game..." />;
   }
@@ -106,6 +111,21 @@ export default function AdminGame() {
     return <ErrorScreen message="Game session not found." />;
   }
 
+  // 2. Define the share URL using the game pin
+  const shareUrl = `https://magictrivia.org/?pin=${gameSession.gamePin}`;
+
+  // 3. Create the copy-to-clipboard handler
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(shareUrl).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000); // Reset after 2 seconds
+    }).catch(err => {
+      console.error('Failed to copy: ', err);
+      handleMessage('Failed to copy link.', 'error');
+    });
+  };
+
+
   return (
     <div className="max-w-6xl mx-auto p-6">
       <div className="mb-6">
@@ -117,7 +137,7 @@ export default function AdminGame() {
       <h1 className="text-4xl font-bold mb-8">Game Control Panel</h1>
 
       {message.text && (
-        <div className={`mb-4 p-4 rounded ${message.type === 'error' ? 'bg-red-100 text-red-700' : message.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
+        <div className={`mb-4 p-4 rounded ${message.type === 'error' ? 'bg-red-100 text-red-700' : message.type ==='success' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
           {message.text}
         </div>
       )}
@@ -135,6 +155,31 @@ export default function AdminGame() {
           />
         </div>
       )}
+
+      {/* 4. ADDED: Share Game Card */}
+      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+        <h2 className="text-2xl font-bold mb-4">Share Game (PIN: {gameSession.gamePin})</h2>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <input
+            type="text"
+            value={shareUrl}
+            readOnly
+            className="flex-grow p-2 border border-gray-300 rounded bg-gray-50"
+          />
+          <button
+            onClick={handleCopyLink}
+            className={`px-4 py-2 font-bold text-white rounded transition-all duration-200 ${
+              copied
+                ? 'bg-green-500'
+                : 'bg-blue-600 hover:bg-blue-700'
+            }`}
+          >
+            {copied ? 'Copied!' : 'Copy Link'}
+          </button>
+        </div>
+      </div>
+      {/* End of Share Game Card */}
+
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <AdminControls

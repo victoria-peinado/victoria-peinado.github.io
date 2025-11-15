@@ -1,5 +1,18 @@
 // src/services/bankService.js
-import { collection, doc, getDocs, writeBatch, serverTimestamp, setDoc } from 'firebase/firestore';
+import {
+  collection,
+  doc,
+  getDocs,
+  writeBatch,
+  serverTimestamp,
+  setDoc,
+  deleteDoc, // Added
+  addDoc, // Added
+  updateDoc, // Added
+  getDoc, // Added
+  query, // Added
+  orderBy, // Added
+} from 'firebase/firestore';
 import { db } from '../firebase';
 import Papa from 'papaparse';
 
@@ -12,11 +25,11 @@ import Papa from 'papaparse';
 export async function createNewBank(adminId, bankName) {
   try {
     const bankRef = doc(collection(db, 'questionBanks'));
-    
+
     await setDoc(bankRef, {
       name: bankName.trim(),
       ownerId: adminId, // Uses ownerId to match Firestore rules
-      createdAt: serverTimestamp()
+      createdAt: serverTimestamp(),
     });
 
     console.log('Question bank created:', bankRef.id);
@@ -42,29 +55,48 @@ export async function handleCsvUpload(file, bankId) {
       complete: async (results) => {
         try {
           const questions = results.data;
-          
+
           if (questions.length === 0) {
             throw new Error('CSV file is empty');
           }
 
           // Validate CSV headers
-          const requiredColumns = ['question', 'answerA', 'answerB', 'answerC', 'answerD', 'correctLetter', 'duration'];
+          const requiredColumns = [
+            'question',
+            'answerA',
+            'answerB',
+            'answerC',
+            'answerD',
+            'correctLetter',
+            'duration',
+          ];
           const headers = Object.keys(questions[0]);
-          const missingColumns = requiredColumns.filter(col => !headers.includes(col));
-          
+          const missingColumns = requiredColumns.filter(
+            (col) => !headers.includes(col)
+          );
+
           if (missingColumns.length > 0) {
-            throw new Error(`Missing required columns: ${missingColumns.join(', ')}`);
+            throw new Error(
+              `Missing required columns: ${missingColumns.join(', ')}`
+            );
           }
 
           // Upload questions to Firestore
           const batch = writeBatch(db);
-          const questionsRef = collection(db, `questionBanks/${bankId}/questions`);
+          const questionsRef = collection(
+            db,
+            `questionBanks/${bankId}/questions`
+          );
 
           questions.forEach((row, index) => {
             // Validate duration
             const duration = parseInt(row.duration);
             if (isNaN(duration) || duration <= 0) {
-              console.warn(`Question ${index + 1}: Invalid duration "${row.duration}", defaulting to 30 seconds`);
+              console.warn(
+                `Question ${index + 1}: Invalid duration "${
+                  row.duration
+                }", defaulting to 30 seconds`
+              );
             }
 
             const questionDoc = doc(questionsRef);
@@ -74,11 +106,11 @@ export async function handleCsvUpload(file, bankId) {
                 { letter: 'A', text: row.answerA.trim() },
                 { letter: 'B', text: row.answerB.trim() },
                 { letter: 'C', text: row.answerC.trim() },
-                { letter: 'D', text: row.answerD.trim() }
+                { letter: 'D', text: row.answerD.trim() },
               ],
               correctLetter: row.correctLetter.toUpperCase().trim(),
               duration: isNaN(duration) ? 30 : duration, // Store duration per question
-              createdAt: serverTimestamp()
+              createdAt: serverTimestamp(),
             });
           });
 
@@ -93,7 +125,7 @@ export async function handleCsvUpload(file, bankId) {
       error: (error) => {
         console.error('Error parsing CSV:', error);
         reject(new Error('Failed to parse CSV file'));
-      }
+      },
     });
   });
 }
@@ -107,12 +139,140 @@ export async function getQuestionBanks(adminId) {
   try {
     const banksRef = collection(db, 'questionBanks');
     const snapshot = await getDocs(banksRef);
-    return snapshot.docs.map(doc => ({
+    return snapshot.docs.map((doc) => ({
       id: doc.id,
-      ...doc.data()
+      ...doc.data(),
     }));
   } catch (error) {
     console.error('Error fetching question banks:', error);
     throw new Error('Failed to fetch question banks');
+  }
+}
+
+// --- NEW FUNCTIONS FOR SPRINT 5, STEP 4 ---
+
+/**
+ * Deletes a question bank AND all its questions.
+ * This is crucial as deleting a doc does not delete its subcollections.
+ * @param {string} bankId - The ID of the question bank to delete
+ */
+export async function deleteQuestionBank(bankId) {
+  try {
+    const batch = writeBatch(db);
+
+    // 1. Get all questions in the subcollection
+    const questionsRef = collection(db, `questionBanks/${bankId}/questions`);
+    const questionsSnapshot = await getDocs(questionsRef);
+
+    // 2. Add all question deletions to the batch
+    questionsSnapshot.docs.forEach((questionDoc) => {
+      batch.delete(questionDoc.ref);
+    });
+
+    // 3. Add the main bank doc deletion to the batch
+    const bankRef = doc(db, 'questionBanks', bankId);
+    batch.delete(bankRef);
+
+    // 4. Commit the batch
+    await batch.commit();
+    console.log(`Successfully deleted bank ${bankId} and all its questions.`);
+  } catch (error) {
+    console.error(`Error deleting question bank ${bankId}:`, error);
+    throw new Error('Failed to delete question bank.');
+  }
+}
+
+/**
+ * Adds a new question to a specific bank.
+ * @param {string} bankId - The ID of the bank
+ * @param {object} questionData - The question object
+ * @returns {Promise<string>} - The new question's ID
+ */
+export async function addQuestion(bankId, questionData) {
+  try {
+    const questionsRef = collection(db, `questionBanks/${bankId}/questions`);
+    // Add the question and include a server timestamp
+    const docRef = await addDoc(questionsRef, {
+      ...questionData,
+      createdAt: serverTimestamp(),
+    });
+    return docRef.id;
+  } catch (error) {
+    console.error(`Error adding question to bank ${bankId}:`, error);
+    throw new Error('Failed to add question.');
+  }
+}
+
+/**
+ * Updates a specific question in a bank.
+ * @param {string} bankId - The ID of the bank
+ * @param {string} questionId - The ID of the question
+ * @param {object} updatedData - The data to update
+ */
+export async function updateQuestion(bankId, questionId, updatedData) {
+  try {
+    const questionRef = doc(db, `questionBanks/${bankId}/questions`, questionId);
+    await updateDoc(questionRef, updatedData);
+  } catch (error) {
+    console.error(`Error updating question ${questionId}:`, error);
+    throw new Error('Failed to update question.');
+  }
+}
+
+/**
+ * Deletes a specific question from a bank.
+ * @param {string} bankId - The ID of the bank
+ * @param {string} questionId - The ID of the question
+ */
+export async function deleteQuestion(bankId, questionId) {
+  try {
+    const questionRef = doc(db, `questionBanks/${bankId}/questions`, questionId);
+    await deleteDoc(questionRef);
+  } catch (error) {
+    console.error(`Error deleting question ${questionId}:`, error);
+    throw new Error('Failed to delete question.');
+  }
+}
+
+// --- NEW HELPER FUNCTIONS FOR THE EDIT PAGE ---
+
+/**
+ * Fetches the details for a single question bank.
+ * @param {string} bankId - The ID of the bank
+ * @returns {Promise<object>} - The bank's data
+ */
+export async function getBankDetails(bankId) {
+  try {
+    const bankRef = doc(db, 'questionBanks', bankId);
+    const bankSnap = await getDoc(bankRef);
+
+    if (!bankSnap.exists()) {
+      throw new Error('Question bank not found');
+    }
+    return { id: bankSnap.id, ...bankSnap.data() };
+  } catch (error) {
+    console.error(`Error fetching bank details ${bankId}:`, error);
+    throw new Error('Failed to fetch bank details.');
+  }
+}
+
+/**
+ * Fetches all questions for a specific bank, ordered by creation time.
+ * @param {string} bankId - The ID of the bank
+ * @returns {Promise<Array>} - Array of question objects
+ */
+export async function getQuestionsForBank(bankId) {
+  try {
+    const questionsRef = collection(db, `questionBanks/${bankId}/questions`);
+    const q = query(questionsRef, orderBy('createdAt', 'desc'));
+    const snapshot = await getDocs(q);
+
+    return snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+_  } catch (error) {
+    console.error(`Error fetching questions for bank ${bankId}:`, error);
+    throw new Error('Failed to fetch questions.');
   }
 }

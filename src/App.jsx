@@ -20,7 +20,7 @@ import SignupPage from './pages/SignupPage';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminGame from './pages/AdminGame';
 import AdminQuestionBanks from './pages/AdminQuestionBanks';
-
+import AdminQuestionBankEdit from './pages/AdminQuestionBankEdit'; // 
 
 /**
  * 2. NEW AppInitializer COMPONENT
@@ -80,6 +80,15 @@ export default function App() {
               element={
                 <ProtectedRoute>
                   <AdminQuestionBanks />
+                </ProtectedRoute>
+              }
+            />
+            {/* --- NEW ROUTE FOR STEP 4 --- */}
+            <Route
+              path="/admin-dashboard/bank/:bankId"
+              element={
+                <ProtectedRoute>
+                  <AdminQuestionBankEdit />
                 </ProtectedRoute>
               }
             />
