@@ -12,6 +12,8 @@ import PlayerWaitingView from '../components/player/PlayerWaitingView';
 import PlayerQuestionView from '../components/player/PlayerQuestionView';
 import PlayerAnswerView from '../components/player/PlayerAnswerView';
 import Leaderboard from '../components/common/Leaderboard';
+// 1. Import your FinalLeaderboard component
+import FinalLeaderboard from '../components/common/FinalLeaderboard'; 
 import LoadingScreen from '../components/common/LoadingScreen';
 import ErrorScreen from '../components/common/ErrorScreen';
 import PlayerNavbar from '../components/layout/PlayerNavbar';
@@ -30,11 +32,10 @@ export default function PlayerPage() {
   const [hasAnswered, setHasAnswered] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Reset answer state when question changes
+  // ... (all other useEffects and handlers are unchanged) ...
   useEffect(() => {
     console.log("Question changed or state updated:", gameSession?.state, "Question:", gameSession?.currentQuestionIndex);
     
-    // Only reset if we're on a NEW question (questionactive state)
     if (gameSession?.state === 'questionactive') {
       const checkAnswer = async () => {
         try {
@@ -64,10 +65,8 @@ export default function PlayerPage() {
         checkAnswer();
       }
     }
-    // Don't reset states if we're in answerrevealed or other states
   }, [gameSession?.currentQuestionIndex, gameSession?.state, playerId, gameId]);
 
-  // Check localStorage ONLY for this specific game
   useEffect(() => {
     if (authLoading || gameLoading || !gameSession || !currentUser) return;
 
@@ -76,7 +75,6 @@ export default function PlayerPage() {
       const savedGameId = localStorage.getItem('triviaGameId');
       const savedNickname = localStorage.getItem('triviaNickname');
 
-      // If saved game ID doesn't match current game, clear and exit
       if (savedGameId !== gameId) {
         console.log("Different game detected, clearing old player data");
         localStorage.removeItem('triviaPlayerId');
@@ -85,32 +83,25 @@ export default function PlayerPage() {
         return;
       }
 
-      // If everything matches, verify player actually exists in THIS game
       if (savedPlayerId === currentUser.uid && savedGameId === gameId && savedNickname) {
         try {
           const playerRef = doc(db, `gameSessions/${gameId}/players/${savedPlayerId}`);
           const playerSnap = await getDoc(playerRef);
           
-          // --- FIX IS HERE ---
           if (playerSnap.exists()) {
             const playerData = playerSnap.data();
-            // Check if player was flagged as exited
             if (playerData.hasExited === true) {
               console.log("Player has exited, clearing localStorage and blocking rejoin");
               localStorage.removeItem('triviaPlayerId');
               localStorage.removeItem('triviaNickname');
               localStorage.removeItem('triviaGameId');
-              // Player is kicked out, setPlayerId(null) will keep them on the join form
               setPlayerId(null);
             } else {
-              // Player is valid and has not exited, let them in
               console.log("Found existing player for THIS game:", savedPlayerId);
               setPlayerId(savedPlayerId);
               setNickname(savedNickname);
             }
-            // --- END FIX ---
           } else {
-            // Player doc doesn't exist, clear storage
             console.log("Player doc doesn't exist in THIS game, clearing localStorage");
             localStorage.removeItem('triviaPlayerId');
             localStorage.removeItem('triviaNickname');
@@ -180,7 +171,7 @@ export default function PlayerPage() {
         answerLetter: answerObj.letter,
         isCorrect: answerObj.correct,
       });
-      setHasAnswered(true); // THIS MUST STAY TRUE
+      setHasAnswered(true); 
       console.log("Answer successfully submitted and hasAnswered set to true");
     } catch (error) {
       console.error("Error submitting answer:", error);
@@ -191,6 +182,7 @@ export default function PlayerPage() {
       setIsSubmitting(false);
     }
   };
+
 
   // --- RENDER LOGIC ---
   if (authLoading || gameLoading) {
@@ -207,6 +199,7 @@ export default function PlayerPage() {
 
   // Not joined yet
   if (!playerId) {
+    // ... (JoinForm logic is unchanged) ...
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-600 to-blue-500 p-8">
         <PlayerNavbar /> 
@@ -265,12 +258,14 @@ export default function PlayerPage() {
           </div>
         );
       
+      // 2. THIS IS THE FIX
       case 'finished':
         return (
           <div className="text-center text-white">
-            <h2 className="text-4xl font-bold mb-4">Game Over!</h2>
-            <p className="text-2xl mb-8">Thanks for playing!</p>
-            <Leaderboard gameId={gameSession.id} />
+            {/* The FinalLeaderboard component already has all the
+              "Game Over" text and podiums, so we just render it.
+            */}
+            <FinalLeaderboard gameId={gameSession.id} />
           </div>
         );
       

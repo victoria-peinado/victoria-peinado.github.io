@@ -1,29 +1,28 @@
 // src/pages/PlayerPinEntry.jsx
-import React, { useState, useEffect } from 'react'; 
-import { useNavigate, useLocation } from 'react-router-dom'; 
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { db } from '../firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import PlayerNavbar from '../components/layout/PlayerNavbar';
 
-// Helper function to parse query parameters
-function useQuery() {
-  return new URLSearchParams(useLocation().search);
-}
+// Note: We no longer need the 'useQuery' helper here
+// as the PIN will be captured in App.jsx
 
 export default function PlayerPinEntry() {
   const [pin, setPin] = useState('');
   const [error, setError] = useState('');
   const [isJoining, setIsJoining] = useState(false);
   const navigate = useNavigate();
-  const queryParams = useQuery(); // Get the query parameters
 
-  // This effect runs on page load to check for a PIN in the URL
+  // 1. This effect now runs once when the page loads
   useEffect(() => {
-    const pinFromUrl = queryParams.get('pin');
-    if (pinFromUrl) {
-      setPin(pinFromUrl.toUpperCase());
+    // 2. Check session storage for a saved PIN
+    const savedPin = sessionStorage.getItem('gamePin');
+    
+    if (savedPin) {
+      setPin(savedPin.toUpperCase());
     }
-  }, [queryParams]); // Re-run if queryParams change
+  }, []); // Empty array means this runs only on mount
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -35,7 +34,6 @@ export default function PlayerPinEntry() {
     try {
       const pinUpper = pin.trim().toUpperCase();
 
-      // Query against the 'gamePinUpper' field
       const pinQuery = query(
         collection(db, 'gameSessions'),
         where('gamePinUpper', '==', pinUpper)
@@ -48,8 +46,10 @@ export default function PlayerPinEntry() {
         setIsJoining(false);
         return;
       }
+      
+      // 3. SUCCESS: Clear the saved PIN so it's not used again
+      sessionStorage.removeItem('gamePin');
 
-      // Game found, navigate to play page
       const gameId = snapshot.docs[0].id;
       navigate(`/play/${gameId}`);
     } catch (err) {
@@ -75,7 +75,7 @@ export default function PlayerPinEntry() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <input
               type="text"
-              value={pin} // This value is now set by the useEffect
+              value={pin} // This will be filled from session storage
               onChange={(e) => setPin(e.target.value.toUpperCase())}
               placeholder="Enter PIN"
               maxLength={5}

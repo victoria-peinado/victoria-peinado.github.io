@@ -1,6 +1,7 @@
 // src/App.jsx
-import React from 'react';
-import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+// 1. Import useLocation to read the URL
+import { HashRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 
 // Import Layout Components
 import ProtectedRoute from './components/layout/ProtectedRoute';
@@ -20,9 +21,41 @@ import AdminDashboard from './pages/AdminDashboard';
 import AdminGame from './pages/AdminGame';
 import AdminQuestionBanks from './pages/AdminQuestionBanks';
 
+/**
+ * 2. NEW HELPER COMPONENT
+ * This component will live inside the Router and watch for a 'pin'
+ * in the URL query string on ANY page.
+ */
+function PinUrlCatcher() {
+  const location = useLocation();
+
+  useEffect(() => {
+    // Check for 'pin' in the URL
+    const params = new URLSearchParams(location.search);
+    const pin = params.get('pin');
+
+    if (pin) {
+      // 3. Found a PIN! Save it to session storage.
+      sessionStorage.setItem('gamePin', pin);
+
+      // 4. Clean the URL so it's not visible anymore.
+      // We use window.history.replaceState to do this without a page reload.
+      // We must include the '#' for the HashRouter.
+      const cleanPath = location.pathname;
+      window.history.replaceState(null, '', `#${cleanPath}`);
+    }
+  }, [location]); // This effect re-runs on every navigation
+
+  return null; // This component renders nothing
+}
+
+
 export default function App() {
   return (
     <HashRouter>
+      {/* 5. Add the PinUrlCatcher here */}
+      <PinUrlCatcher />
+
       <Routes>
         {/* Routes WITH Main Navbar (Login, Admin, etc.) */}
         <Route element={<MainLayout />}>
@@ -59,10 +92,9 @@ export default function App() {
 
         {/* Routes WITHOUT Main Navbar (Player/Stream Kiosk Mode) */}
         <Route element={<KioskLayout />}>
-          {/* UPDATED: /join is now in KioskLayout */}
+          {/* This page will now check sessionStorage for the PIN */}
           <Route path="/join" element={<PlayerPinEntry />} />
           
-          {/* Redirect /play to /join */}
           <Route path="/play" element={<Navigate to="/join" replace />} />
           <Route path="/play/:gameId" element={<PlayerPage />} />
           <Route path="/stream/:gameId" element={<StreamPage />} />
