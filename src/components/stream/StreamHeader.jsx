@@ -3,8 +3,8 @@ import React from 'react';
 import QRCode from 'react-qr-code';
 
 function StreamHeader({ gamePin }) {
-  // FIX: This now points to your homepage root, not /join
-  const joinUrl = `https://magictrivia.org/?pin=${gamePin}`;
+  // 1. FIX: Added the /#/ to make this link HashRouter-compatible.
+  const joinUrl = `https://magictrivia.org/#/?pin=${gamePin}`;
 
   return (
     <div className="absolute top-0 left-0 right-0 p-6 flex justify-between items-start z-10">
@@ -21,7 +21,7 @@ function StreamHeader({ gamePin }) {
       {/* QR Code to Join */}
       <div className="bg-white p-4 rounded-lg shadow-lg">
         <QRCode
-          value={joinUrl} // This will now be the correct URL
+          value={joinUrl} // 2. This will now be the correct URL
           size={160} 
           bgColor="#FFFFFF"
           fgColor="#000000"

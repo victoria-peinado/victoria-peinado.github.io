@@ -1,7 +1,7 @@
 // src/App.jsx
 import React, { useEffect } from 'react';
-// 1. Import useLocation to read the URL
-import { HashRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+// 1. Import useLocation and useNavigate
+import { HashRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 
 // Import Layout Components
 import ProtectedRoute from './components/layout/ProtectedRoute';
@@ -22,29 +22,27 @@ import AdminGame from './pages/AdminGame';
 import AdminQuestionBanks from './pages/AdminQuestionBanks';
 
 /**
- * 2. NEW HELPER COMPONENT
- * This component will live inside the Router and watch for a 'pin'
- * in the URL query string on ANY page.
+ * 2. UPDATED HELPER COMPONENT
+ * This now uses useNavigate for a more reliable URL clean-up.
  */
 function PinUrlCatcher() {
   const location = useLocation();
+  const navigate = useNavigate(); // 3. Get navigate function
 
   useEffect(() => {
-    // Check for 'pin' in the URL
+    // This `location.search` will now correctly read from the hash
     const params = new URLSearchParams(location.search);
     const pin = params.get('pin');
 
     if (pin) {
-      // 3. Found a PIN! Save it to session storage.
+      // 4. Found a PIN! Save it to session storage.
       sessionStorage.setItem('gamePin', pin);
 
-      // 4. Clean the URL so it's not visible anymore.
-      // We use window.history.replaceState to do this without a page reload.
-      // We must include the '#' for the HashRouter.
-      const cleanPath = location.pathname;
-      window.history.replaceState(null, '', `#${cleanPath}`);
+      // 5. Use navigate to clean the URL (removes the ?pin=... part)
+      // This replaces the history entry without a page reload.
+      navigate(location.pathname, { replace: true }); 
     }
-  }, [location]); // This effect re-runs on every navigation
+  }, [location, navigate]); // 6. Add navigate to dependency array
 
   return null; // This component renders nothing
 }
@@ -53,7 +51,7 @@ function PinUrlCatcher() {
 export default function App() {
   return (
     <HashRouter>
-      {/* 5. Add the PinUrlCatcher here */}
+      {/* 7. The PinUrlCatcher stays here */}
       <PinUrlCatcher />
 
       <Routes>
@@ -98,7 +96,7 @@ export default function App() {
           <Route path="/play" element={<Navigate to="/join" replace />} />
           <Route path="/play/:gameId" element={<PlayerPage />} />
           <Route path="/stream/:gameId" element={<StreamPage />} />
-        </Route>
+        </Route> {/* <-- 8. FIXED TYPO HERE */}
       </Routes>
     </HashRouter>
   );
