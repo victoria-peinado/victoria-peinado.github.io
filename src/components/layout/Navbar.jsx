@@ -1,12 +1,15 @@
 // src/components/layout/Navbar.jsx
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom'; // Keep Link for the logo
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext'; 
 import { logout } from '../../services/authService';
+import { Button } from '../ui/Button'; // 1. Import new Button
+import { useTranslation } from 'react-i18next'; // 2. Import i18n
 
 export default function Navbar() {
   const { currentUser, isAdmin } = useAuth();
-  const navigate = useNavigate(); // <-- NEW: Get the navigate function
+  const navigate = useNavigate();
+  const { t } = useTranslation(); // 3. Initialize i18n
 
   const handleLogout = async () => {
     try {
@@ -17,56 +20,63 @@ export default function Navbar() {
     }
   };
 
-  // NEW: Handlers for navigation
   const goToLogin = () => navigate('/login');
   const goToSignup = () => navigate('/signup');
   const goToAdmin = () => navigate('/admin');
 
   return (
-    <nav className="w-full bg-gray-800 p-4 shadow-lg border-b border-gray-700">
+    // 4. Use new "Primal Mana" theme for the navbar
+    <nav className="w-full bg-neutral-900 p-4 shadow-lg border-b border-neutral-700">
       <div className="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-4">
-        <Link to="/" className="text-2xl font-bold text-blue-400">
-          Live Trivia Night
+        {/* 5. Update title and style */}
+        <Link to="/" className="text-2xl font-display font-bold text-primary">
+          Magic Trivia
         </Link>
 
         <div className="flex items-center gap-4">
           {currentUser ? (
             <>
-              <span className="text-gray-300 hidden sm:block">
+              {/* 6. Update text color */}
+              <span className="text-neutral-300 hidden sm:block">
                 {currentUser.email}
               </span>
 
               {isAdmin && (
-                <button // <-- UPDATED
+                // 7. Use new <Button> component
+                <Button 
                   onClick={goToAdmin}
-                  className="px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition"
+                  variant="primary"
+                  className="py-2 px-4 text-sm"
                 >
-                  My Dashboard
-                </button>
+                  {t('admin.dashboard.title')}
+                </Button>
               )}
 
-              <button
+              <Button
                 onClick={handleLogout}
-                className="px-4 py-2 text-white bg-red-600 rounded-lg hover:bg-red-700 transition"
+                variant="danger"
+                className="py-2 px-4 text-sm"
               >
-                Logout
-              </button>
+                {t('logout')}
+              </Button>
             </>
           ) : (
             <>
-              {/* UPDATED: Changed from <Link> to <button> */}
-              <button
+              {/* 8. Use new <Button> component */}
+              <Button
                 onClick={goToLogin}
-                className="px-4 py-2 text-gray-300 rounded-lg hover:bg-gray-700 hover:text-white transition"
+                variant="neutral"
+                className="py-2 px-4 text-sm"
               >
-                Login
-              </button>
-              <button
+                {t('login')}
+              </Button>
+              <Button
                 onClick={goToSignup}
-                className="px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition"
+                variant="primary"
+                className="py-2 px-4 text-sm"
               >
-                Sign Up
-              </button>
+                {t('signup')}
+              </Button>
             </>
           )}
         </div>

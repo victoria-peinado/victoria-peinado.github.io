@@ -1,43 +1,23 @@
 // src/pages/LandingPage.jsx
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { useTranslation } from 'react-i18next'; // 1. Import
-import { Button } from '../components/ui/Button'; // 2. Import Button
+import { useTranslation } from 'react-i18next';
+import { Button } from '../components/ui/Button';
 
 export default function LandingPage() {
-  const { t } = useTranslation(); // 3. Initialize
+  const { t } = useTranslation();
 
   return (
-    // 4. Apply base theme colors
+    // Apply base theme colors
     <div className="min-h-screen bg-neutral-900 text-neutral-100 font-body flex flex-col items-center p-4">
       
-      {/* 5. Header with new Button styles */}
-      <header className="w-full max-w-6xl py-6 flex justify-between items-center">
-        <h1 className="text-3xl font-display font-bold text-primary">
-          {t('landing.title')}
-        </h1>
-        
-        <nav className="flex gap-3">
-          {/* Use Link wrapping a Button */}
-          <Link to="/admin">
-            <Button variant="neutral" className="py-2 px-4 text-sm">
-              {t('landing.nav.admin')}
-            </Button>
-          </Link>
-          <Link to="/stream">
-            <Button variant="neutral" className="py-2 px-4 text-sm">
-              {t('landing.nav.stream')}
-            </Button>
-          </Link>
-          <Link to="/play">
-            <Button variant="primary" className="py-2 px-6 text-sm">
-              {t('landing.nav.play')}
-            </Button>
-          </Link>
-        </nav>
-      </header>
+      {/* --- THIS HEADER SECTION HAS BEEN REMOVED --- */}
+      {/* <header className="w-full max-w-6xl py-6 flex justify-between items-center">
+        ...
+      </header> */}
 
-      {/* 6. Main Hero Section */}
+      {/* Main Hero Section */}
+      {/* We add 'flex-grow' to make this div fill the space */}
       <main className="flex-grow flex flex-col items-center justify-center w-full max-w-5xl text-center px-4">
         {/* Use Card styles on a div for the hero box */}
         <div className="bg-neutral-800 p-8 md:p-12 rounded-2xl shadow-2xl border-2 border-neutral-700 w-full max-w-3xl">
@@ -56,7 +36,7 @@ export default function LandingPage() {
         </div>
       </main>
 
-      {/* 7. Themed Footer */}
+      {/* Themed Footer */}
       <footer className="w-full max-w-5xl py-8 mt-16 text-center text-neutral-700">
         <p>{t('landing.footer.copyright')}</p>
       </footer>
