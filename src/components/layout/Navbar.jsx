@@ -3,13 +3,14 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext'; 
 import { logout } from '../../services/authService';
-import { Button } from '../ui/Button'; // 1. Import new Button
-import { useTranslation } from 'react-i18next'; // 2. Import i18n
+import { Button } from '../ui/Button'; 
+import { useTranslation } from 'react-i18next';
+import VolumeControl from '../common/VolumeControl'; // 1. Import VolumeControl
 
 export default function Navbar() {
   const { currentUser, isAdmin } = useAuth();
   const navigate = useNavigate();
-  const { t } = useTranslation(); // 3. Initialize i18n
+  const { t } = useTranslation(); 
 
   const handleLogout = async () => {
     try {
@@ -25,24 +26,22 @@ export default function Navbar() {
   const goToAdmin = () => navigate('/admin');
 
   return (
-    // 4. Use new "Primal Mana" theme for the navbar
     <nav className="w-full bg-neutral-900 p-4 shadow-lg border-b border-neutral-700">
       <div className="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-4">
-        {/* 5. Update title and style */}
         <Link to="/" className="text-2xl font-display font-bold text-primary">
           Magic Trivia
         </Link>
 
         <div className="flex items-center gap-4">
+          <VolumeControl /> {/* 2. Add VolumeControl component here */}
+          
           {currentUser ? (
             <>
-              {/* 6. Update text color */}
               <span className="text-neutral-300 hidden sm:block">
                 {currentUser.email}
               </span>
 
               {isAdmin && (
-                // 7. Use new <Button> component
                 <Button 
                   onClick={goToAdmin}
                   variant="primary"
@@ -62,7 +61,6 @@ export default function Navbar() {
             </>
           ) : (
             <>
-              {/* 8. Use new <Button> component */}
               <Button
                 onClick={goToLogin}
                 variant="neutral"

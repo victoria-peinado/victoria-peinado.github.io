@@ -3,9 +3,9 @@ import React, { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { logout } from '../../services/authService';
-// UPDATED: Import path now points to the new playerAuth service
 import { handleExitGame } from '../../services/player/playerAuth';
 import ConfirmModal from '../common/ConfirmModal';
+import VolumeControl from '../common/VolumeControl'; // 1. Import VolumeControl
 
 export default function PlayerNavbar() {
   const [isExitModalOpen, setIsExitModalOpen] = useState(false);
@@ -73,7 +73,9 @@ export default function PlayerNavbar() {
             </Link>
           )}
 
-          <div className="flex gap-4">
+          <div className="flex items-center gap-4"> {/* 2. Added items-center */}
+            <VolumeControl /> {/* 3. Add VolumeControl component here */}
+            
             {showExitGameButton && (
               <button
                 onClick={() => setIsExitModalOpen(true)}

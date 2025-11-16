@@ -1,7 +1,7 @@
 // src/pages/PlayerPage.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react'; // 1. Import useEffect
 import { useParams } from 'react-router-dom';
-import { useTranslation } from 'react-i18next'; // 1. Import
+import { useTranslation } from 'react-i18next';
 
 // --- IMPORT HOOKS ---
 import { useGameSession } from '../hooks/useGameSession';
@@ -11,6 +11,7 @@ import { usePlayerAuth } from '../hooks/usePlayerAuth';
 import { usePlayerJoin } from '../hooks/usePlayerJoin';
 import { usePlayerState } from '../hooks/usePlayerState';
 import { usePlayerActions } from '../hooks/usePlayerActions';
+import { useAudio } from '../hooks/useAudio'; // 2. Import useAudio
 
 // --- IMPORT COMPONENTS ---
 import PlayerJoinForm from '../components/player/PlayerJoinForm';
@@ -23,12 +24,13 @@ import LoadingScreen from '../components/common/LoadingScreen';
 import ErrorScreen from '../components/common/ErrorScreen';
 import PlayerNavbar from '../components/layout/PlayerNavbar';
 import AdminMessageOverlay from '../components/common/AdminMessageOverlay';
-import FullScreenCenter from '../components/layout/FullScreenCenter'; // 2. Import
+import FullScreenCenter from '../components/layout/FullScreenCenter';
 
 export default function PlayerPage() {
   const { gameId } = useParams();
-  const { t } = useTranslation(); // 3. Initialize
+  const { t } = useTranslation();
   const { currentUser, loading: authLoading } = useAuth();
+  const { setMusic } = useAudio(); // 3. Get setMusic
   
   const [message, setMessage] = useState({ text: '', type: '' });
   const handleMessage = (text, type, duration = 3000) => {
@@ -48,25 +50,45 @@ export default function PlayerPage() {
   const { adminMessage, setAdminMessage } = usePlayerState(gameId, playerId, gameSession);
   const { selectedAnswer, hasAnswered, isSubmitting, handleAnswerSubmit } = usePlayerActions(gameId, playerId, gameSession, handleMessage);
 
+  // 4. NEW: Add state-driven music logic
+  useEffect(() => {
+    if (!gameSession) return;
+
+    switch (gameSession.state) {
+      case 'waiting':
+        setMusic('music_lobby.mp3');
+        break;
+      case 'questionactive':
+        setMusic('music_question.mp3');
+        break;
+      case 'answerrevealed':
+      case 'leaderboard':
+        setMusic('music_lobby.mp3');
+        break;
+      case 'finished':
+        // FinalLeaderboard component handles its own music
+        break;
+      default:
+        // Do nothing for unknown states
+    }
+  }, [gameSession?.state, setMusic]); // Re-run when state or setMusic changes
+
   if (authLoading || gameLoading || isVerifying) {
     return <LoadingScreen message={t('loading.game')} />;
   }
   if (gameError) return <ErrorScreen message={gameError} />;
   if (!gameSession) return <ErrorScreen message={t('error.gameNotFound')} />;
 
-  // --- 4. NOT JOINED YET (Refactored) ---
+  // --- NOT JOINED YET ---
   if (!playerId) {
-    // Use the FullScreenCenter layout
     return (
       <FullScreenCenter>
         <div className="max-w-md w-full">
-          {/* Use themed message */}
           {message.text && (
             <div className={`mb-4 p-4 rounded text-white ${message.type === 'error' ? 'bg-secondary' : 'bg-primary-dark'}`}>
               {message.text}
             </div>
           )}
-          {/* This form is now the themed <Card> */}
           <PlayerJoinForm
             nickname={nickname}
             onNicknameChange={setNickname}
@@ -78,7 +100,7 @@ export default function PlayerPage() {
     );
   }
 
-  // --- 5. JOINED (Refactored) ---
+  // --- JOINED ---
   const renderGameState = () => {
     switch (gameSession.state) {
       case 'waiting':
@@ -97,7 +119,6 @@ export default function PlayerPage() {
   };
 
   return (
-    // Use the new theme background and apply 'font-body'
     <div className="min-h-screen bg-neutral-900 text-neutral-100 font-body p-8">
       <AdminMessageOverlay 
         message={adminMessage} 
@@ -106,7 +127,6 @@ export default function PlayerPage() {
       
       <PlayerNavbar />
       <div className="max-w-4xl mx-auto mt-4">
-        {/* Use themed message */}
         {message.text && (
           <div className={`mb-4 p-4 rounded text-white ${message.type === 'error' ? 'bg-secondary' : 'bg-primary-dark'}`}>
             {message.text}

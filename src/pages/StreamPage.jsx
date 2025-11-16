@@ -1,9 +1,10 @@
 // src/pages/StreamPage.jsx
-import React from 'react';
+import React, { useEffect } from 'react'; // 1. Import useEffect
 import { useParams } from 'react-router-dom';
-import { useTranslation } from 'react-i18next'; // 1. Import
+import { useTranslation } from 'react-i18next';
 import { useGameSession } from '../hooks/useGameSession';
 import { useQuestionBank } from '../hooks/useQuestionBank';
+import { useAudio } from '../hooks/useAudio'; // 2. Import useAudio
 import StreamWaitingView from '../components/stream/StreamWaitingView';
 import StreamQuestionView from '../components/stream/StreamQuestionView';
 import StreamAnswerView from '../components/stream/StreamAnswerView';
@@ -15,9 +16,33 @@ import FinalLeaderboard from '../components/common/FinalLeaderboard';
 
 export default function StreamPage() {
   const { gameId } = useParams();
-  const { t } = useTranslation(); // 2. Initialize
+  const { t } = useTranslation();
   const { gameSession, loading, error } = useGameSession(gameId);
   const { questions } = useQuestionBank(gameSession?.questionBankId);
+  const { setMusic } = useAudio(); // 3. Get setMusic
+
+  // 4. NEW: Add state-driven music logic
+  useEffect(() => {
+    if (!gameSession) return;
+
+    switch (gameSession.state) {
+      case 'waiting':
+        setMusic('music_lobby.mp3');
+        break;
+      case 'questionactive':
+        setMusic('music_question.mp3');
+        break;
+      case 'answerrevealed':
+      case 'leaderboard':
+        setMusic('music_lobby.mp3');
+        break;
+      case 'finished':
+        // FinalLeaderboard component handles its own music
+        break;
+      default:
+        // Do nothing for unknown states
+    }
+  }, [gameSession?.state, setMusic]); // Re-run when state or setMusic changes
 
   if (loading) {
     return <LoadingScreen message={t('loading.game')} />;
@@ -40,7 +65,6 @@ export default function StreamPage() {
       case 'leaderboard':
         return (
           <div className="text-center mt-48"> 
-            {/* 3. Use i18n and display font */}
             <h2 className="text-5xl font-display font-bold text-primary-light mb-8">
               {t('leaderboard.title')}
             </h2>
@@ -63,7 +87,6 @@ export default function StreamPage() {
   };
 
   return (
-    // 4. Use new theme background and fonts
     <div className="min-h-screen bg-neutral-900 text-neutral-100 font-body 
                     flex items-center justify-center p-8 relative">
       

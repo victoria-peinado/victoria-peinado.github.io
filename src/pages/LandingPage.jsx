@@ -1,25 +1,33 @@
 // src/pages/LandingPage.jsx
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useEffect } from 'react'; // 1. Import useEffect
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Button } from '../components/ui/Button';
+import { useAudio } from '../hooks/useAudio';
+// 2. No more WelcomeModal or useState
 
 export default function LandingPage() {
   const { t } = useTranslation();
+  const { setMusic } = useAudio();
+  const navigate = useNavigate();
+  
+  // 3. This function is for the main "Enter" button
+  const handleEnter = () => {
+    // PlayerPage will handle switching to lobby music
+    navigate('/play');
+  };
+
+  // 4. New useEffect to set music for this page
+  useEffect(() => {
+    // This will only play if audio is already unlocked
+    setMusic('music_ambient.mp3'); 
+  }, [setMusic]);
 
   return (
-    // Apply base theme colors
     <div className="min-h-screen bg-neutral-900 text-neutral-100 font-body flex flex-col items-center p-4">
-      
-      {/* --- THIS HEADER SECTION HAS BEEN REMOVED --- */}
-      {/* <header className="w-full max-w-6xl py-6 flex justify-between items-center">
-        ...
-      </header> */}
+      {/* 5. WelcomeModal is removed from here */}
 
-      {/* Main Hero Section */}
-      {/* We add 'flex-grow' to make this div fill the space */}
       <main className="flex-grow flex flex-col items-center justify-center w-full max-w-5xl text-center px-4">
-        {/* Use Card styles on a div for the hero box */}
         <div className="bg-neutral-800 p-8 md:p-12 rounded-2xl shadow-2xl border-2 border-neutral-700 w-full max-w-3xl">
           <h2 className="text-4xl md:text-6xl font-display font-bold mb-4 text-primary-light">
             {t('landing.hero.title')}
@@ -28,15 +36,17 @@ export default function LandingPage() {
             {t('landing.hero.subtitle')}
           </p>
           
-          <Link to="/play">
-            <Button variant="primary" className="text-2xl px-10 py-4">
-              {t('landing.hero.cta')}
-            </Button>
-          </Link>
+          <Button 
+            onClick={handleEnter}
+            variant="primary" 
+            className="text-2xl px-10 py-4"
+            // 6. No longer needs to be disabled!
+          >
+            {t('landing.hero.cta')}
+          </Button>
         </div>
       </main>
 
-      {/* Themed Footer */}
       <footer className="w-full max-w-5xl py-8 mt-16 text-center text-neutral-700">
         <p>{t('landing.footer.copyright')}</p>
       </footer>

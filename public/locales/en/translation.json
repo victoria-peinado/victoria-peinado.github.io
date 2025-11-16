@@ -1,5 +1,7 @@
 {
-  "welcome": "Welcome to Magic Trivia",
+  "welcome.title": "Welcome to Magic Trivia!",
+  "welcome.message": "This experience uses background music and sound effects. Click below to begin.",
+  "welcome.button": "Click to Begin",
   "login": "Log In",
   "signup": "Sign Up",
   "logout": "Log Out",
@@ -100,7 +102,6 @@
   "admin.dashboard.modal.title": "Delete Game?",
   "admin.dashboard.modal.message": "Are you sure you want to delete this game? This action cannot be undone and all player data will be lost.",
   "admin.dashboard.modal.confirmText": "Delete",
-
   "admin.banks.backLink": "← Back to Dashboard",
   "admin.banks.title": "My Question Banks",
   "admin.banks.createTitle": "Create New Bank",
@@ -123,8 +124,6 @@
   "admin.banks.uploadButton": "Upload CSV",
   "admin.banks.modal.title": "Delete Question Bank",
   "admin.banks.modal.message": "Are you sure you want to delete \"{{name}}\"? This will also delete all {{count}} questions inside it. This action cannot be undone.",
-  "admin.banks.modal.title": "Delete Question Bank",
-  "admin.banks.modal.message": "Are you sure you want to delete \"{{name}}\"? This will also delete all {{count}} questions inside it. This action cannot be undone.",
   "admin.banks.subtitle": "Create and manage your question banks",
   "admin.banks.nameLabel": "Bank Name",
   "admin.banks.namePlaceholder": "e.g., Movie Night Trivia",
@@ -132,5 +131,4 @@
   "admin.banks.untitled": "Untitled Bank",
   "admin.banks.backButton": "Back to Dashboard",
   "admin.banks.modal.confirmText": "Delete Bank"
-
 }

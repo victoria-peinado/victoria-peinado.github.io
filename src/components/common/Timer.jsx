@@ -1,15 +1,23 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useAudio } from '../../hooks/useAudio';
 
 export default function Timer({ startTime, duration, onExpire }) {
   const [timeLeft, setTimeLeft] = useState(duration);
+  const { playSound, stopSound } = useAudio();
+  const isTickingRef = useRef(false); // 1. NEW: Ref to track ticking state
 
-  // 1. Use a ref to store the onExpire callback.
-  // This lets us access the *latest* version of the function
-  // from inside our interval without causing the useEffect to re-run.
   const onExpireRef = useRef(onExpire);
+  const playSoundRef = useRef(playSound);
+  const stopSoundRef = useRef(stopSound);
+
   useEffect(() => {
     onExpireRef.current = onExpire;
   }, [onExpire]);
+
+  useEffect(() => {
+    playSoundRef.current = playSound;
+    stopSoundRef.current = stopSound;
+  }, [playSound, stopSound]);
 
   useEffect(() => {
     if (!startTime) return;
@@ -23,37 +31,68 @@ export default function Timer({ startTime, duration, onExpire }) {
     };
 
     setTimeLeft(calculateTimeLeft());
+    isTickingRef.current = false; // Reset on new question
 
     const interval = setInterval(() => {
       const remaining = calculateTimeLeft();
       setTimeLeft(remaining);
 
+      // --- UPDATED Audio Logic for Looping Sound ---
+      if (remaining <= 5 && remaining >= 1) {
+        // 2. If 5 seconds or less, and not already ticking, start looping tick
+        if (!isTickingRef.current) {
+          playSoundRef.current('timer_tick', { loop: true });
+          isTickingRef.current = true;
+        }
+      }
+
+      if (remaining > 5) {
+         // 3. Stop tick sound if time is > 5 (e.g., admin adds time)
+        if (isTickingRef.current) {
+          stopSoundRef.current('timer_tick');
+          isTickingRef.current = false;
+        }
+      }
+
       if (remaining <= 0) {
-        // 2. Call the function from the ref.
+        // 4. CRITICAL: Stop the looping tick sound first
+        if (isTickingRef.current) {
+          stopSoundRef.current('timer_tick');
+          isTickingRef.current = false;
+        }
+        
         if (onExpireRef.current) {
           onExpireRef.current();
         }
+        
+        playSoundRef.current('times_up'); // 5. NOW play times up
         clearInterval(interval);
       }
+      // ---------------------------------
+
     }, 100);
 
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      // 6. Cleanup on unmount
+      if (isTickingRef.current) {
+        stopSoundRef.current('timer_tick');
+        isTickingRef.current = false;
+      }
+    };
     
-  // 3. The useEffect *only* depends on these stable values.
-  // It will no longer reset when the parent page re-renders.
   }, [startTime, duration]);
 
+  // ... (getTimerColor and getProgressColor are unchanged) ...
   const getTimerColor = () => {
     const percentage = (timeLeft / duration) * 100;
-    // Use our new "Primal Mana" theme colors
     if (percentage > 50) return 'text-primary-light';
     if (percentage > 20) return 'text-yellow-400';
     return 'text-secondary'; // Red
   };
 
   const getProgressColor = () => {
-    const percentage = (timeLeft / duration) * 100;
-    // Use our new "Primal Mana" theme colors
+    const percentage = (timeLeft / duration)* 100;
     if (percentage > 50) return 'bg-primary';
     if (percentage > 20) return 'bg-yellow-500';
     return 'bg-secondary';
@@ -66,7 +105,6 @@ export default function Timer({ startTime, duration, onExpire }) {
       <div className={`text-4xl font-display font-bold text-center mb-2 ${getTimerColor()}`}>
         {timeLeft}s
       </div>
-      {/* 4. Use themed background for the progress bar */}
       <div className="w-full bg-neutral-700 rounded-full h-4 overflow-hidden">
         <div
           className={`h-full ${getProgressColor()} transition-all duration-100`}

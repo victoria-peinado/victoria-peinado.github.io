@@ -110,20 +110,23 @@
     |       SignupPage.jsx
     |       StreamPage.jsx
     |
-    \---services
-        |   authService.js
-        |   scoringService.js
-        |
-        +---bank
-        |       bankManagement.js
-        |       bankQuestions.js
-        |
-        +---game
-        |       gameManagement.js
-        |       gameMessaging.js
-        |       gameState.js
-        |
-        \---player
-                playerAdmin.js
-                playerAuth.js
-                playerGameplay.js
+    +---services
+    |   |   authService.js
+    |   |   scoringService.js
+    |   |
+    |   +---bank
+    |   |       bankManagement.js
+    |   |       bankQuestions.js
+    |   |
+    |   +---game
+    |   |       gameManagement.js
+    |   |       gameMessaging.js
+    |   |       gameState.js
+    |   |
+    |   \---player
+    |           playerAdmin.js
+    |           playerAuth.js
+    |           playerGameplay.js
+    |
+    \---utils
+            animations.js

@@ -3,10 +3,10 @@ import React, { useState, useEffect } from 'react';
 import { db } from '../../firebase';
 import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LabelList } from 'recharts';
-// 1. Import Confetti and a hook to get window size
 import Confetti from 'react-confetti';
+import { useAudio } from '../../hooks/useAudio'; // 1. Import useAudio
 
-// 2. Add a simple hook to get window dimensions
+// A simple hook to get window dimensions
 function useWindowSize() {
   const [size, setSize] = useState([window.innerWidth, window.innerHeight]);
   useEffect(() => {
@@ -20,9 +20,19 @@ function useWindowSize() {
 export default function FinalLeaderboard({ gameId }) {
   const [players, setPlayers] = useState([]);
   const [loading, setLoading] = useState(true);
-  // 3. Get window width and height for the confetti
   const [width, height] = useWindowSize();
+  const { playSound, setMusic } = useAudio(); // 2. Get audio functions
 
+  // 3. Add new useEffect for audio
+  useEffect(() => {
+    playSound('fanfare');
+    setMusic('music_lobby.mp3'); // Set music back to lobby/calm track
+
+    // We only want this to run once when the component mounts
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty dependency array ensures this runs once on mount
+
+  // Existing useEffect for data fetching
   useEffect(() => {
     if (!gameId) {
       setLoading(false);
@@ -82,7 +92,6 @@ export default function FinalLeaderboard({ gameId }) {
 
   return (
     <div className="w-full max-w-6xl mx-auto relative">
-      {/* 4. ADD THE CONFETTI COMPONENT! */}
       <Confetti
         width={width}
         height={height}
@@ -93,7 +102,6 @@ export default function FinalLeaderboard({ gameId }) {
 
       {/* Celebration Header */}
       <div className="text-center mb-12">
-        {/* 5. Re-themed header to match "Primal Mana" */}
         <h1 className="text-6xl font-display font-bold text-primary-light mb-4">
           Game Complete!
         </h1>
