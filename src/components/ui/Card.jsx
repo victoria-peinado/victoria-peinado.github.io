@@ -11,6 +11,8 @@ export function Card({ children, className = '' }) {
         rounded-xl 
         shadow-lg 
         overflow-hidden 
+        transition-all duration-med
+        hover:border-primary-dark
         ${className}
       `}
     >

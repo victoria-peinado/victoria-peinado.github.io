@@ -14,7 +14,7 @@ export function Select({ children, className = '', ...props }) {
         focus:outline-none 
         focus:ring-2 focus:ring-primary 
         focus:border-primary 
-        transition-colors duration-200
+        transition-colors duration-fast
         appearance-none // Removes default OS styling
         ${className}
       `}

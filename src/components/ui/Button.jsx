@@ -28,7 +28,7 @@ export function Button({
         font-display font-bold text-lg 
         rounded-lg 
         shadow-md 
-        transition-all duration-200 ease-in-out
+        transition-all duration-fast ease-in-out
         transform active:scale-95 
         focus:outline-none focus:ring-2 focus:ring-offset-2 
         focus:ring-offset-neutral-900 

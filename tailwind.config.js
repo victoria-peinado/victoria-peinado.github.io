@@ -2,7 +2,6 @@
 export default {
   content: [
     "./index.html",
-    // This line is the fix. We are adding 'css' to the list.
     "./src/**/*.{js,ts,jsx,tsx,css}", 
   ],
   theme: {
@@ -10,32 +9,39 @@ export default {
       colors: {
         // "Primal Mana" Theme
         primary: {
-          DEFAULT: '#619A5A', // A rich, medium "Forest" green
-          'light': '#8BC34A', // Lighter "Plains" accent
-          'dark': '#38703A',  // Deep "Swamp" green
+          DEFAULT: '#619A5A', 
+          'light': '#8BC34A', 
+          'dark': '#38703A',  
         },
         secondary: {
-          DEFAULT: '#D32F2F', // "Mountain" Red (for destructive actions)
+          DEFAULT: '#D32F2F', 
           'dark': '#B71C1C',
         },
         accent: {
-          'blue': '#0D47A1',   // "Island" Blue (for primary buttons)
-          'white': '#F5F5DC',  // "Plains" White (parchment-like)
-          'black': '#212121',  // "Swamp" Black (card backgrounds)
+          'blue': '#0D47A1',   
+          'white': '#F5F5DC',  
+          'black': '#212121',  
         },
         neutral: {
-          '100': '#F5F5DC', // Light "Parchment" text
-          '200': '#E0E0E0', // Lighter gray text
-          '700': '#4E342E', // "Stone" or "Wood" border
-          '800': '#212121', // "Swamp" / Dark card background
-          '900': '#263238', // Deep "Forest" main app background
-          '950': '#1b2327', // Darker hover
+          '100': '#F5F5DC', 
+          '200': '#E0E0E0', 
+          '700': '#4E342E', 
+          '800': '#212121', 
+          '900': '#263238', 
+          '950': '#1b2327', 
         }
       },
       fontFamily: {
-        'display': ['Merriweather', 'serif'], // Your "Display" font
-        'body': ['Lato', 'sans-serif'],        // Your "Body" font
+        'display': ['Merriweather', 'serif'], 
+        'body': ['Lato', 'sans-serif'],        
       },
+      
+      // --- ADD THIS BLOCK ---
+      transitionDuration: {
+        'fast': '150ms',
+        'med': '300ms',
+      }
+      // ----------------------
     },
   },
   plugins: [],
