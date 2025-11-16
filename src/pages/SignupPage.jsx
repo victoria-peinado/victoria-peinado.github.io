@@ -1,103 +1,114 @@
 // src/pages/SignupPage.jsx
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next'; // 1. Import
 import { signup } from '../services/authService';
-import { db } from '../firebase'; // <-- Import Firestore db
-import { doc, setDoc } from 'firebase/firestore'; // <-- Import doc/setDoc
+import { db } from '../firebase';
+import { doc, setDoc } from 'firebase/firestore';
+import { useAuthForm } from '../hooks/useAuthForm';
+
+// 2. Import UI Kit
+import FullScreenCenter from '../components/layout/FullScreenCenter';
+import { Card, CardContent, CardTitle } from '../components/ui/Card';
+import { Label } from '../components/ui/Label';
+import { Input } from '../components/ui/Input';
+import { Button } from '../components/ui/Button';
 
 export default function SignupPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
+  const { t } = useTranslation(); // 3. Initialize
+  const {
+    email, setEmail, password, setPassword,
+    confirmPassword, setConfirmPassword, error, setError,
+    loading, setLoading, navigate
+  } = useAuthForm();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (password !== confirmPassword) {
-      return setError('Passwords do not match');
+      return setError(t('signup.errorMatch')); // i18n key
     }
-
     setError('');
     setLoading(true);
-
     try {
-      const userCredential = await signup(email, password); // <-- Get user credential
+      const userCredential = await signup(email, password);
       const user = userCredential.user;
-
-      // NEW: Create a document in the 'users' collection
       const userDocRef = doc(db, 'users', user.uid);
       await setDoc(userDocRef, {
         email: user.email,
-        isAdmin: false, // <-- Set admin to false by default
+        isAdmin: false,
         createdAt: new Date(),
       });
-
-      // User is logged in, but not an admin. Send to home page.
-      navigate('/'); // <-- FIX: Don't send to /admin
+      navigate('/');
     } catch (err) {
-      setError('Failed to create an account. The email may already be in use.');
+      setError(t('signup.errorFailed')); // i18n key
       console.error(err);
     }
     setLoading(false);
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-gray-800 p-8 rounded-2xl shadow-2xl border border-gray-700">
-        <h2 className="text-4xl font-extrabold text-center mb-6 text-white">Sign Up</h2>
-        {error && <p className="bg-red-600 text-white p-3 rounded-lg text-center mb-4">{error}</p>}
-        <form onSubmit={handleSubmit}>
-          {/* ... all your input fields ... */}
-          <div className="mb-4">
-            <label className="block text-gray-300 mb-2" htmlFor="email">Email</label>
-            <input
-              type="email"
-              id="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full p-4 rounded-lg bg-gray-700 text-white placeholder-gray-400 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+    // 4. Use new Layout and Components
+    <FullScreenCenter>
+      <Card>
+        <CardContent className="p-8">
+          <CardTitle className="text-center mb-6">
+            {t('signup.title')}
+          </CardTitle>
+          
+          {error && <p className="bg-secondary text-white p-3 rounded-lg text-center mb-4">{error}</p>}
+          
+          <form onSubmit={handleSubmit}>
+            <div className="mb-4">
+              <Label htmlFor="email">{t('signup.emailLabel')}</Label>
+              <Input
+                type="email"
+                id="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+            <div className="mb-4">
+              <Label htmlFor="password">{t('signup.passwordLabel')}</Label>
+              <Input
+                type="password"
+                id="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+            <div className="mb-6">
+              <Label htmlFor="confirm-password">{t('signup.confirmPasswordLabel')}</Label>
+              <Input
+                type="password"
+                id="confirm-password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+              />
+            </div>
+            
+            <Button
+              type="submit"
+              variant="primary"
+              disabled={loading}
+              className="w-full"
+            >
+              {loading ? t('signup.submitButtonLoading') : t('signup.submitButton')}
+            </Button>
+          </form>
+          
+          <div className="mt-6 text-center">
+            <p className="text-neutral-200">
+              {t('signup.loginPrompt')} {' '}
+              <Link to="/login" className="font-bold text-primary-light hover:text-primary">
+                {t('signup.loginLink')}
+              </Link>
+            </p>
           </div>
-          <div className="mb-4">
-            <label className="block text-gray-300 mb-2" htmlFor="password">Password</label>
-            <input
-              type="password"
-              id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="w-full p-4 rounded-lg bg-gray-700 text-white placeholder-gray-400 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <div className="mb-6">
-            <label className="block text-gray-300 mb-2" htmlFor="confirm-password">Confirm Password</label>
-            <input
-              type="password"
-              id="confirm-password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-              className="w-full p-4 rounded-lg bg-gray-700 text-white placeholder-gray-400 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold p-4 rounded-lg shadow-lg transition-transform duration-150 ease-in-out hover:scale-105"
-          >
-            {loading ? 'Signing Up...' : 'Sign Up'}
-          </button>
-        </form>
-        <div className="mt-6 text-center">
-          <p className="text-gray-400">
-            Already have an account? <Link to="/login" className="text-blue-400 hover:text-blue-300">Log In</Link>
-          </p>
-        </div>
-      </div>
-    </div>
+        </CardContent>
+      </Card>
+    </FullScreenCenter>
   );
 }

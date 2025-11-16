@@ -1,20 +1,21 @@
 // src/components/stream/StreamWaitingView.jsx
 import React from 'react';
+import { useTranslation } from 'react-i18next'; // 1. Import
 
-// 1. We just need the gamePin to pass to the header now
-function StreamWaitingView({ gamePin }) {
+function StreamWaitingView() {
+  const { t } = useTranslation(); // 2. Initialize
+
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-8">
-      <div className="text-center">
-        <div className="text-9xl mb-8"></div>
-        <h1 className="text-7xl font-bold mb-6">Get Ready!</h1>
-        <p className="text-3xl text-gray-300 mb-12">
-          The next question is coming soon...
-        </p>
-        
-        {/* 2. Remove the entire QR Code Placeholder and FIX comment */}
-        
-      </div>
+    // This component is centered by StreamPage,
+    // so we just need to style the text
+    <div className="text-center">
+      {/* 3. Apply display font and theme colors */}
+      <h1 className="text-7xl font-display font-bold text-primary-light mb-6">
+        {t('stream.waiting.title')}
+      </h1>
+      <p className="text-3xl text-neutral-200 font-body">
+        {t('stream.waiting.subtitle')}
+      </p>
     </div>
   );
 }

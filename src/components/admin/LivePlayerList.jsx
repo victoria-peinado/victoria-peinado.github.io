@@ -1,105 +1,34 @@
 // src/components/admin/LivePlayerList.jsx
-import React, { useState, useEffect } from 'react';
-import { db } from '../../firebase';
-// UPDATED: Import 'where'
-import { collection, onSnapshot, query, where } from 'firebase/firestore';
-import * as playerService from '../../services/playerService'; // <-- 1. IMPORT
-import ConfirmModal from '../common/ConfirmModal'; // <-- 2. IMPORT
+import React from 'react';
+import ConfirmModal from '../common/ConfirmModal';
+import { useLivePlayerList } from '../../hooks/useLivePlayerList';
+import { Button } from '../ui/Button';
 
 export default function LivePlayerList({ gameId }) {
-  const [players, setPlayers] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  // --- 3. ADD STATE FOR MODAL ---
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [playerToKick, setPlayerToKick] = useState(null);
-
-  useEffect(() => {
-    if (!gameId) {
-      setLoading(false);
-      return;
-    }
-
-    const playersRef = collection(db, `gameSessions/${gameId}/players`);
-    // UPDATED: Add 'where' clauses to hide exited AND kicked players
-    const q = query(
-      playersRef, 
-      where("hasExited", "==", false),
-      where("isKicked", "==", false) // <-- ADD THIS
-    );
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const playersData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      setPlayers(playersData);
-      setLoading(false);
-    }, (error) => { // Add error handling
-      console.error("Error fetching live players:", error);
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, [gameId]);
-
-  // --- 4. ADD MODAL HANDLERS ---
-  const handleKickClick = (player) => {
-    setPlayerToKick(player);
-    setIsModalOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setPlayerToKick(null);
-  };
-
-  const handleConfirmKick = async () => {
-    if (!playerToKick) return;
-
-    try {
-      await playerService.kickPlayer(gameId, playerToKick.id);
-      // The onSnapshot listener will automatically remove the 
-      // player from the UI because of the query update.
-    } catch (error) {
-      console.error("Error kicking player:", error);
-      // You could show an error message to the admin here
-    } finally {
-      handleCloseModal();
-    }
-  };
-
-  // --- 1. ADD HANDLER FOR DIRECT MESSAGE ---
-  const handleMessageClick = async (player) => {
-    const message = window.prompt(`Send a direct message to ${player.nickname}:`);
-    
-    if (message && message.trim()) {
-      try {
-        await playerService.sendDirectMessage(gameId, player.id, message.trim());
-        // You could show a success toast here if you have one
-        alert('Message sent!');
-      } catch (error) {
-        console.error('Error sending direct message:', error);
-        alert('Failed to send message.');
-      }
-    }
-  };
-
+  const {
+    players,
+    loading,
+    isModalOpen,
+    playerToKick,
+    handleKickClick,
+    handleCloseModal,
+    handleConfirmKick,
+    handleMessageClick
+  } = useLivePlayerList(gameId);
 
   if (loading) {
-    return <div className="text-gray-600">Loading players...</div>;
+    return <div className="text-neutral-400">Loading players...</div>;
   }
 
-  // --- 5. UPDATE JSX ---
   return (
     <>
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h2 className="text-2xl font-bold mb-4">
-          Live Players ({players.length})
-        </h2>
+      <div>
+        <p className="text-sm text-neutral-400 mb-4">
+          {players.length} {players.length === 1 ? 'player' : 'players'} online
+        </p>
         
         {players.length === 0 ? (
-          <p className="text-gray-500 text-center py-4">
+          <p className="text-neutral-400 text-center py-8">
             No players have joined yet.
           </p>
         ) : (
@@ -107,34 +36,36 @@ export default function LivePlayerList({ gameId }) {
             {players.map((player) => (
               <div
                 key={player.id}
-                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition"
+                className="flex items-center justify-between p-3 bg-neutral-800 rounded-lg hover:bg-neutral-700 transition border border-neutral-700"
               >
-                <div className="flex items-center gap-3">
-                  <div className="w-2 h-2 bg-green-500 rounded-full" />
-                  <span className="font-semibold text-gray-800">
-                    {player.nickname}
-                  </span>
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <div className="w-2 h-2 bg-primary-light rounded-full flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-neutral-100 truncate">
+                      {player.nickname}
+                    </p>
+                    <p className="text-xs text-neutral-400 font-mono">
+                      {player.score || 0} pts
+                    </p>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-600 font-mono">
-                    {player.score || 0} pts
-                  </span>
-                  
-                  {/* --- 2. ADD MESSAGE BUTTON --- */}
-                  <button
+                
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <Button
                     onClick={() => handleMessageClick(player)}
-                    className="bg-blue-500 text-white px-3 py-1 text-xs rounded shadow hover:bg-blue-600 transition"
+                    variant="secondary"
+                    className="py-1 px-3 text-xs"
                   >
                     Message
-                  </button>
+                  </Button>
                   
-                  {/* --- ADD KICK BUTTON --- */}
-                  <button
+                  <Button
                     onClick={() => handleKickClick(player)}
-                    className="bg-red-500 text-white px-3 py-1 text-xs rounded shadow hover:bg-red-600 transition"
+                    variant="danger"
+                    className="py-1 px-3 text-xs"
                   >
                     Kick
-                  </button>
+                  </Button>
                 </div>
               </div>
             ))}
@@ -142,7 +73,6 @@ export default function LivePlayerList({ gameId }) {
         )}
       </div>
 
-      {/* --- ADD MODAL RENDER --- */}
       <ConfirmModal
         isOpen={isModalOpen}
         onClose={handleCloseModal}

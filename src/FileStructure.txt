@@ -2,16 +2,19 @@
 |   |   CNAME
 |   |   icon.jpg
 |   |
-|   \---.qodo
-|       +---agents
-|       \---workflows
+|   +---.qodo
+|   |   +---agents
+|   |   \---workflows
+|   \---locales
+|       \---en
+|               translation.json
+|
 \---src
-    |   App.css
     |   App.jsx
     |   FileStructure.txt
     |   firebase.js
+    |   i18n.js
     |   index.css
-    |   Leaderboard.jsx
     |   main.jsx
     |   SampleBank.csv
     |
@@ -28,11 +31,14 @@
     +---components
     |   +---admin
     |   |       AdminControls.jsx
+    |   |       BroadcastCard.jsx
     |   |       CsvUploader.jsx
     |   |       GameStatus.jsx
     |   |       LivePlayerList.jsx
+    |   |       ShareGameCard.jsx
     |   |
     |   +---common
+    |   |       AdminMessageOverlay.jsx
     |   |       ConfirmModal.jsx
     |   |       ErrorScreen.jsx
     |   |       FinalLeaderboard.jsx
@@ -43,6 +49,9 @@
     |   |       Timer.jsx
     |   |
     |   +---layout
+    |   |       AdminLayout.jsx
+    |   |       AdminSidebar.jsx
+    |   |       FullScreenCenter.jsx
     |   |       KioskLayout.jsx
     |   |       MainLayout.jsx
     |   |       Navbar.jsx
@@ -55,19 +64,39 @@
     |   |       PlayerQuestionView.jsx
     |   |       PlayerWaitingView.jsx
     |   |
-    |   \---stream
-    |           StreamAnswerView.jsx
-    |           StreamHeader.jsx
-    |           StreamQuestionView.jsx
-    |           StreamWaitingView.jsx
+    |   +---stream
+    |   |       StreamAnswerView.jsx
+    |   |       StreamHeader.jsx
+    |   |       StreamQuestionView.jsx
+    |   |       StreamWaitingView.jsx
+    |   |
+    |   \---ui
+    |           Button.jsx
+    |           Card.jsx
+    |           Input.jsx
+    |           Label.jsx
+    |           Modal.jsx
+    |           Select.jsx
     |
     +---contexts
     |       AuthContext.jsx
     |
     +---hooks
+    |       useAdminDashboard.js
+    |       useAdminGame.js
+    |       useAdminQuestionBanks.js
+    |       useAuthForm.js
+    |       useCsvUploader.js
     |       useGameSession.js
     |       useLeaderboard.js
+    |       useLivePlayerList.js
+    |       usePinEntry.js
+    |       usePlayerActions.js
+    |       usePlayerAuth.js
+    |       usePlayerJoin.js
+    |       usePlayerState.js
     |       useQuestionBank.js
+    |       useQuestionBankEditor.js
     |
     +---pages
     |       AdminDashboard.jsx
@@ -82,8 +111,19 @@
     |       StreamPage.jsx
     |
     \---services
-            authService.js
-            bankService.js
-            gameService.js
-            playerService.js
-            scoringService.js
+        |   authService.js
+        |   scoringService.js
+        |
+        +---bank
+        |       bankManagement.js
+        |       bankQuestions.js
+        |
+        +---game
+        |       gameManagement.js
+        |       gameMessaging.js
+        |       gameState.js
+        |
+        \---player
+                playerAdmin.js
+                playerAuth.js
+                playerGameplay.js

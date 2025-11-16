@@ -1,41 +1,58 @@
 // src/components/player/PlayerJoinForm.jsx
 import React from 'react';
+import { useTranslation } from 'react-i18next'; // 1. Import
+
+// 2. Import UI Kit
+import { Card, CardContent, CardTitle } from '../ui/Card';
+import { Label } from '../ui/Label';
+import { Input } from '../ui/Input';
+import { Button } from '../ui/Button';
 
 function PlayerJoinForm({ 
   nickname, 
-  onNicknameChange,  // Changed from setNickname
-  onJoinGame,        // Changed from handleJoinGame
+  onNicknameChange,
+  onJoinGame,
   isJoining 
 }) {
+  const { t } = useTranslation(); // 3. Initialize
+
   return (
-    <div className="bg-white rounded-lg shadow-md p-8">
-      <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">
-        Enter your nickname to play
-      </h2>
-      
-      <form onSubmit={onJoinGame} className="space-y-4">
-        <div>
-          <input
-            type="text"
-            value={nickname}
-            onChange={(e) => onNicknameChange(e.target.value)}
-            placeholder="Your Nickname"
-            className="w-full px-4 py-3 border rounded text-lg"
-            disabled={isJoining}
-            maxLength={20}
-            autoFocus
-          />
-        </div>
+    // 4. Use Card component
+    <Card>
+      <CardContent className="p-8">
+        <CardTitle className="text-center mb-6">
+          {t('joinForm.title')}
+        </CardTitle>
         
-        <button
-          type="submit"
-          disabled={isJoining || !nickname.trim()}
-          className="w-full bg-green-600 text-white px-6 py-3 rounded text-lg font-semibold hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-        >
-          {isJoining ? 'Joining...' : 'Join Game'}
-        </button>
-      </form>
-    </div>
+        <form onSubmit={onJoinGame} className="space-y-4">
+          <div>
+            {/* 5. Use new Label and Input */}
+            <Label htmlFor="nickname" className="sr-only">{t('joinForm.label')}</Label>
+            <Input
+              type="text"
+              id="nickname"
+              value={nickname}
+              onChange={(e) => onNicknameChange(e.target.value)}
+              placeholder={t('joinForm.placeholder')}
+              className="text-lg"
+              disabled={isJoining}
+              maxLength={20}
+              autoFocus
+            />
+          </div>
+          
+          {/* 6. Use new Button component */}
+          <Button
+            type="submit"
+            variant="primary"
+            disabled={isJoining || !nickname.trim()}
+            className="w-full"
+          >
+            {isJoining ? t('joinForm.buttonLoading') : t('joinForm.button')}
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
   );
 }
 

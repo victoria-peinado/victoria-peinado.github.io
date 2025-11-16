@@ -1,33 +1,14 @@
-import React, { useState } from 'react';
-import * as bankService from '../../services/bankService';
+// src/components/admin/CsvUploader.jsx
+import React from 'react';
+// UPDATED: Import the new hook
+import { useCsvUploader } from '../../hooks/useCsvUploader';
 
 export default function CsvUploader({ bankId, onUploadSuccess }) {
-  const [isUploading, setIsUploading] = useState(false);
-  const [message, setMessage] = useState({ text: '', type: '' });
-
-  const handleMessage = (text, type, duration = 4000) => {
-    setMessage({ text, type });
-    setTimeout(() => setMessage({ text: '', type: '' }), duration);
-  };
-
-  const handleFileChange = async (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    setIsUploading(true);
-    handleMessage('Uploading and parsing CSV...', 'info');
-
-    try {
-      const questionCount = await bankService.handleCsvUpload(file, bankId);
-      handleMessage(`Successfully uploaded ${questionCount} questions!`, 'success');
-      if (onUploadSuccess) onUploadSuccess();
-    } catch (error) {
-      handleMessage(error.message, 'error');
-    } finally {
-      setIsUploading(false);
-      event.target.value = null;
-    }
-  };
+  // UPDATED: All logic is now contained in this single hook
+  const { isUploading, message, handleFileChange } = useCsvUploader(
+    bankId,
+    onUploadSuccess
+  );
 
   return (
     <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">

@@ -1,7 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 export default function Timer({ startTime, duration, onExpire }) {
   const [timeLeft, setTimeLeft] = useState(duration);
+
+  // 1. Use a ref to store the onExpire callback.
+  // This lets us access the *latest* version of the function
+  // from inside our interval without causing the useEffect to re-run.
+  const onExpireRef = useRef(onExpire);
+  useEffect(() => {
+    onExpireRef.current = onExpire;
+  }, [onExpire]);
 
   useEffect(() => {
     if (!startTime) return;
@@ -14,45 +22,52 @@ export default function Timer({ startTime, duration, onExpire }) {
       return Math.floor(remaining);
     };
 
-    // Initial calculation
     setTimeLeft(calculateTimeLeft());
 
-    // Update every 100ms for smooth countdown
     const interval = setInterval(() => {
       const remaining = calculateTimeLeft();
       setTimeLeft(remaining);
 
-      if (remaining <= 0 && onExpire) {
-        onExpire();
+      if (remaining <= 0) {
+        // 2. Call the function from the ref.
+        if (onExpireRef.current) {
+          onExpireRef.current();
+        }
         clearInterval(interval);
       }
     }, 100);
 
     return () => clearInterval(interval);
-  }, [startTime, duration, onExpire]);
+    
+  // 3. The useEffect *only* depends on these stable values.
+  // It will no longer reset when the parent page re-renders.
+  }, [startTime, duration]);
 
   const getTimerColor = () => {
     const percentage = (timeLeft / duration) * 100;
-    if (percentage > 50) return 'text-green-400';
+    // Use our new "Primal Mana" theme colors
+    if (percentage > 50) return 'text-primary-light';
     if (percentage > 20) return 'text-yellow-400';
-    return 'text-red-500';
+    return 'text-secondary'; // Red
   };
 
   const getProgressColor = () => {
     const percentage = (timeLeft / duration) * 100;
-    if (percentage > 50) return 'bg-green-500';
+    // Use our new "Primal Mana" theme colors
+    if (percentage > 50) return 'bg-primary';
     if (percentage > 20) return 'bg-yellow-500';
-    return 'bg-red-500';
+    return 'bg-secondary';
   };
 
   const progressWidth = (timeLeft / duration) * 100;
 
   return (
     <div className="w-full">
-      <div className={`text-4xl font-bold text-center mb-2 ${getTimerColor()}`}>
+      <div className={`text-4xl font-display font-bold text-center mb-2 ${getTimerColor()}`}>
         {timeLeft}s
       </div>
-      <div className="w-full bg-gray-700 rounded-full h-4 overflow-hidden">
+      {/* 4. Use themed background for the progress bar */}
+      <div className="w-full bg-neutral-700 rounded-full h-4 overflow-hidden">
         <div
           className={`h-full ${getProgressColor()} transition-all duration-100`}
           style={{ width: `${progressWidth}%` }}

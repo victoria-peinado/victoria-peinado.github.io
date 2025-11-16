@@ -1,5 +1,6 @@
 // src/components/admin/AdminControls.jsx
 import React from 'react';
+import { Button } from '../ui/Button';
 
 function AdminControls({
   onShowQuestion,
@@ -11,46 +12,46 @@ function AdminControls({
   const gameState = gameSession?.state;
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
-      <h2 className="text-2xl font-bold mb-4">Game Controls</h2>
-      
-      <div className="space-y-3">
-        <button
-          onClick={onShowQuestion}
-          disabled={isBusy || gameState === 'finished' || gameState === 'questionactive'}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition duration-200"
-        >
-          {gameState === 'waiting' ? 'Start Game' : 'Next Question'}
-        </button>
+    <div className="space-y-3">
+      <Button
+        onClick={onShowQuestion}
+        disabled={isBusy || gameState === 'finished' || gameState === 'questionactive'}
+        variant="primary"
+        className="w-full py-3"
+      >
+        {gameState === 'waiting' ? 'Start Game' : 'Next Question'}
+      </Button>
 
-        <button
-          onClick={onShowLeaderboard}
-          disabled={isBusy || (gameState !== 'answerrevealed' && gameState !== 'leaderboard')}
-          className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition duration-200"
-        >
-          Show Leaderboard
-        </button>
+      <Button
+        onClick={onShowLeaderboard}
+        disabled={isBusy || (gameState !== 'answerrevealed' && gameState !== 'leaderboard')}
+        variant="secondary"
+        className="w-full py-3"
+      >
+        Show Leaderboard
+      </Button>
 
-        <button
-          onClick={onEndGame}
-          disabled={isBusy || gameState === 'finished'}
-          className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition duration-200"
-        >
-          End Game
-        </button>
-      </div>
+      <Button
+        onClick={onEndGame}
+        disabled={isBusy || gameState === 'finished'}
+        variant="danger"
+        className="w-full py-3"
+      >
+        End Game
+      </Button>
 
+      {/* Status Messages */}
       {gameState === 'questionactive' && (
-        <div className="mt-4 p-4 bg-blue-100 rounded-lg">
-          <p className="text-blue-800 font-semibold text-center">
+        <div className="mt-4 p-4 bg-primary-dark rounded-lg border border-primary">
+          <p className="text-primary-light font-semibold text-center">
             Timer is running...
           </p>
         </div>
       )}
 
       {gameState === 'finished' && (
-        <div className="mt-4 p-4 bg-green-100 rounded-lg">
-          <p className="text-green-800 font-semibold text-center">
+        <div className="mt-4 p-4 bg-neutral-800 rounded-lg border border-primary-light">
+          <p className="text-primary-light font-semibold text-center">
             Game has ended!
           </p>
         </div>

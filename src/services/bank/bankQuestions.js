@@ -1,44 +1,18 @@
-// src/services/bankService.js
+// src/services/bank/bankQuestions.js
 import {
   collection,
   doc,
   getDocs,
   writeBatch,
   serverTimestamp,
-  setDoc,
-  deleteDoc, // Added
-  addDoc, // Added
-  updateDoc, // Added
-  getDoc, // Added
-  query, // Added
-  orderBy, // Added
+  deleteDoc,
+  addDoc,
+  updateDoc,
+  query,
+  orderBy,
 } from 'firebase/firestore';
-import { db } from '../firebase';
+import { db } from '../../firebase';
 import Papa from 'papaparse';
-
-/**
- * Creates a new question bank
- * @param {string} adminId - The admin's user ID
- * @param {string} bankName - Name of the question bank
- * @returns {Promise<string>} - The new bank's ID
- */
-export async function createNewBank(adminId, bankName) {
-  try {
-    const bankRef = doc(collection(db, 'questionBanks'));
-
-    await setDoc(bankRef, {
-      name: bankName.trim(),
-      ownerId: adminId, // Uses ownerId to match Firestore rules
-      createdAt: serverTimestamp(),
-    });
-
-    console.log('Question bank created:', bankRef.id);
-    return bankRef.id;
-  } catch (error) {
-    console.error('Error creating question bank:', error);
-    throw new Error('Failed to create question bank');
-  }
-}
 
 /**
  * Handles CSV upload and parses questions into Firestore
@@ -131,58 +105,6 @@ export async function handleCsvUpload(file, bankId) {
 }
 
 /**
- * Fetches all question banks for an admin
- * @param {string} adminId - The admin's user ID (optional for now)
- * @returns {Promise<Array>} - Array of question banks
- */
-export async function getQuestionBanks(adminId) {
-  try {
-    const banksRef = collection(db, 'questionBanks');
-    const snapshot = await getDocs(banksRef);
-    return snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
-  } catch (error) {
-    console.error('Error fetching question banks:', error);
-    throw new Error('Failed to fetch question banks');
-  }
-}
-
-// --- NEW FUNCTIONS FOR SPRINT 5, STEP 4 ---
-
-/**
- * Deletes a question bank AND all its questions.
- * This is crucial as deleting a doc does not delete its subcollections.
- * @param {string} bankId - The ID of the question bank to delete
- */
-export async function deleteQuestionBank(bankId) {
-  try {
-    const batch = writeBatch(db);
-
-    // 1. Get all questions in the subcollection
-    const questionsRef = collection(db, `questionBanks/${bankId}/questions`);
-    const questionsSnapshot = await getDocs(questionsRef);
-
-    // 2. Add all question deletions to the batch
-    questionsSnapshot.docs.forEach((questionDoc) => {
-      batch.delete(questionDoc.ref);
-    });
-
-    // 3. Add the main bank doc deletion to the batch
-    const bankRef = doc(db, 'questionBanks', bankId);
-    batch.delete(bankRef);
-
-    // 4. Commit the batch
-    await batch.commit();
-    console.log(`Successfully deleted bank ${bankId} and all its questions.`);
-  } catch (error) {
-    console.error(`Error deleting question bank ${bankId}:`, error);
-    throw new Error('Failed to delete question bank.');
-  }
-}
-
-/**
  * Adds a new question to a specific bank.
  * @param {string} bankId - The ID of the bank
  * @param {object} questionData - The question object
@@ -213,7 +135,8 @@ export async function updateQuestion(bankId, questionId, updatedData) {
   try {
     const questionRef = doc(db, `questionBanks/${bankId}/questions`, questionId);
     await updateDoc(questionRef, updatedData);
-  } catch (error) {
+  } catch (error)
+ {
     console.error(`Error updating question ${questionId}:`, error);
     throw new Error('Failed to update question.');
   }
@@ -234,28 +157,6 @@ export async function deleteQuestion(bankId, questionId) {
   }
 }
 
-// --- NEW HELPER FUNCTIONS FOR THE EDIT PAGE ---
-
-/**
- * Fetches the details for a single question bank.
- * @param {string} bankId - The ID of the bank
- * @returns {Promise<object>} - The bank's data
- */
-export async function getBankDetails(bankId) {
-  try {
-    const bankRef = doc(db, 'questionBanks', bankId);
-    const bankSnap = await getDoc(bankRef);
-
-    if (!bankSnap.exists()) {
-      throw new Error('Question bank not found');
-    }
-    return { id: bankSnap.id, ...bankSnap.data() };
-  } catch (error) {
-    console.error(`Error fetching bank details ${bankId}:`, error);
-    throw new Error('Failed to fetch bank details.');
-  }
-}
-
 /**
  * Fetches all questions for a specific bank, ordered by creation time.
  * @param {string} bankId - The ID of the bank
@@ -271,7 +172,7 @@ export async function getQuestionsForBank(bankId) {
       id: doc.id,
       ...doc.data(),
     }));
-_  } catch (error) {
+  } catch (error) {
     console.error(`Error fetching questions for bank ${bankId}:`, error);
     throw new Error('Failed to fetch questions.');
   }

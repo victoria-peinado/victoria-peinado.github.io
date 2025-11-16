@@ -3,13 +3,14 @@ import React, { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { logout } from '../../services/authService';
-import { handleExitGame } from '../../services/playerService';
+// UPDATED: Import path now points to the new playerAuth service
+import { handleExitGame } from '../../services/player/playerAuth';
 import ConfirmModal from '../common/ConfirmModal';
 
 export default function PlayerNavbar() {
   const [isExitModalOpen, setIsExitModalOpen] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
-  const [isBackModalOpen, setIsBackModalOpen] = useState(false); // <-- NEW state for "Back" button
+  const [isBackModalOpen, setIsBackModalOpen] = useState(false);
   
   const navigate = useNavigate();
   const { gameId } = useParams(); 
@@ -28,7 +29,6 @@ export default function PlayerNavbar() {
     navigate('/'); // Navigate to Landing Page after exiting
   };
   
-  // NEW: Handler for the "Back to Home" modal
   const onConfirmBackToHome = async () => {
     if (gameId && currentUser) {
       await handleExitGame(gameId, currentUser.uid);
@@ -57,10 +57,7 @@ export default function PlayerNavbar() {
       <nav className="w-full bg-transparent p-4 text-white">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           
-          {/* --- FIX IS HERE --- */}
-          {/* "Back to Home" is now conditional */}
           {gameId ? (
-            // If in a game, it's a button that opens a modal
             <button
               onClick={() => setIsBackModalOpen(true)}
               className="px-4 py-2 text-white bg-gray-700 bg-opacity-50 rounded-lg hover:bg-gray-600 transition"
@@ -68,7 +65,6 @@ export default function PlayerNavbar() {
               Back to Home
             </button>
           ) : (
-            // If not in a game (e.g., /join), it's a simple link
             <Link 
               to="/" 
               className="px-4 py-2 text-white bg-gray-700 bg-opacity-50 rounded-lg hover:bg-gray-600 transition"
@@ -76,7 +72,6 @@ export default function PlayerNavbar() {
               Back to Home
             </Link>
           )}
-          {/* --- END FIX --- */}
 
           <div className="flex gap-4">
             {showExitGameButton && (
@@ -102,7 +97,6 @@ export default function PlayerNavbar() {
 
       {/* --- Modals --- */}
       
-      {/* NEW: Modal for the "Back to Home" button */}
       <ConfirmModal
         isOpen={isBackModalOpen}
         onClose={() => setIsBackModalOpen(false)}

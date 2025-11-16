@@ -1,68 +1,64 @@
 // src/pages/LandingPage.jsx
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next'; // 1. Import
+import { Button } from '../components/ui/Button'; // 2. Import Button
 
 export default function LandingPage() {
-  // The local state for nickname and join is removed
-  // as players now join via a Game PIN on the player page.
+  const { t } = useTranslation(); // 3. Initialize
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white font-sans flex flex-col items-center p-4">
-      <header className="w-full max-w-5xl py-6 flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-blue-400">Live Trivia Night</h1>
+    // 4. Apply base theme colors
+    <div className="min-h-screen bg-neutral-900 text-neutral-100 font-body flex flex-col items-center p-4">
+      
+      {/* 5. Header with new Button styles */}
+      <header className="w-full max-w-6xl py-6 flex justify-between items-center">
+        <h1 className="text-3xl font-display font-bold text-primary">
+          {t('landing.title')}
+        </h1>
         
         <nav className="flex gap-3">
-          <Link 
-            to="/admin" 
-            className="group relative px-6 py-3 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 rounded-lg font-semibold shadow-lg transition-all duration-200 hover:scale-105 hover:shadow-xl"
-          >
-            <span className="flex items-center gap-2">
-              <span>Admin</span>
-            </span>
+          {/* Use Link wrapping a Button */}
+          <Link to="/admin">
+            <Button variant="neutral" className="py-2 px-4 text-sm">
+              {t('landing.nav.admin')}
+            </Button>
           </Link>
-          
-          <Link 
-            to="/play" 
-            className="group relative px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-500 hover:to-green-600 rounded-lg font-semibold shadow-lg transition-all duration-200 hover:scale-105 hover:shadow-xl"
-          >
-            <span className="flex items-center gap-2">
-              <span>Play</span>
-            </span>
+          <Link to="/stream">
+            <Button variant="neutral" className="py-2 px-4 text-sm">
+              {t('landing.nav.stream')}
+            </Button>
           </Link>
-          
-          <Link 
-            to="/stream" 
-            className="group relative px-6 py-3 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 rounded-lg font-semibold shadow-lg transition-all duration-200 hover:scale-105 hover:shadow-xl"
-          >
-            <span className="flex items-center gap-2">
-              <span>Stream</span>
-            </span>
+          <Link to="/play">
+            <Button variant="primary" className="py-2 px-6 text-sm">
+              {t('landing.nav.play')}
+            </Button>
           </Link>
         </nav>
       </header>
 
+      {/* 6. Main Hero Section */}
       <main className="flex-grow flex flex-col items-center justify-center w-full max-w-5xl text-center px-4">
-        <div className="bg-gray-800 p-8 md:p-12 rounded-2xl shadow-2xl border border-gray-700 w-full max-w-3xl">
-          <h2 className="text-4xl md:text-6xl font-extrabold mb-4">
-            The Game is On!
+        {/* Use Card styles on a div for the hero box */}
+        <div className="bg-neutral-800 p-8 md:p-12 rounded-2xl shadow-2xl border-2 border-neutral-700 w-full max-w-3xl">
+          <h2 className="text-4xl md:text-6xl font-display font-bold mb-4 text-primary-light">
+            {t('landing.hero.title')}
           </h2>
-          <p className="text-lg md:text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
-            Get a Game PIN from the host and click 'Play' to join the game.
-          </p>{/* <-- FIX: Removed the stray </all-files-data-was-updated-successfully> text */}
+          <p className="text-lg md:text-xl text-neutral-200 mb-8 max-w-2xl mx-auto">
+            {t('landing.hero.subtitle')}
+          </p>
           
-          {/* This form is removed. The "Play" button in the nav is now the primary action. */}
-          <Link 
-            to="/play" 
-            className="bg-blue-600 hover:bg-blue-700 text-white font-bold p-4 rounded-lg shadow-lg transition-transform duration-150 ease-in-out hover:scale-105 text-2xl"
-          >
-            Click Here to Enter Game PIN
+          <Link to="/play">
+            <Button variant="primary" className="text-2xl px-10 py-4">
+              {t('landing.hero.cta')}
+            </Button>
           </Link>
-
         </div>
       </main>
 
-      <footer className="w-full max-w-5xl py-8 mt-16 text-center text-gray-500">
-        <p>&copy; 2025 Trivia App. All rights reserved.</p>
+      {/* 7. Themed Footer */}
+      <footer className="w-full max-w-5xl py-8 mt-16 text-center text-neutral-700">
+        <p>{t('landing.footer.copyright')}</p>
       </footer>
     </div>
   );

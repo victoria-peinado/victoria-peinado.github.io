@@ -1,16 +1,22 @@
 // src/components/player/PlayerWaitingView.jsx
 import React from 'react';
+import { useTranslation } from 'react-i18next'; // 1. Import
 
-function PlayerWaitingView() {
-  const savedNickname = localStorage.getItem('triviaNickname');
+// We get the nickname from PlayerPage as a prop
+function PlayerWaitingView({ nickname }) {
+  const { t } = useTranslation(); // 2. Initialize
+  const displayName = nickname || t('player.waiting.defaultName');
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-gray-900 to-purple-900 text-white p-8 flex items-center justify-center">
-      <div className="text-center">
-        <div className="text-9xl mb-8"></div>
-        <h1 className="text-5xl font-bold mb-4">Get Ready, {savedNickname}!</h1>
-        <p className="text-2xl text-gray-300">The next question is coming soon...</p>
-      </div>
+    // 3. Remove background. This is now centered by PlayerPage.
+    <div className="text-center">
+      {/* 4. Apply display font and theme colors */}
+      <h1 className="text-5xl font-display font-bold text-primary-light mb-4">
+        {t('player.waiting.title', { name: displayName })}
+      </h1>
+      <p className="text-2xl text-neutral-200">
+        {t('player.waiting.subtitle')}
+      </p>
     </div>
   );
 }

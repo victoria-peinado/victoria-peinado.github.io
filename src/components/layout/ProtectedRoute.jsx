@@ -1,14 +1,15 @@
 // src/components/layout/ProtectedRoute.jsx
+
 import React from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import LoadingScreen from '../common/LoadingScreen';
 
-export default function ProtectedRoute({ children }) {
-  const { currentUser, isAdmin, loading } = useAuth(); // <-- NEW: Get isAdmin state
+export default function ProtectedRoute() {
+  const { currentUser, isAdmin, loading } = useAuth();
 
   if (loading) {
-    return <LoadingScreen message="Authenticating..." />;
+    return <LoadingScreen />;
   }
 
   if (!currentUser) {
@@ -22,6 +23,6 @@ export default function ProtectedRoute({ children }) {
     return <Navigate to="/" replace />;
   }
 
-  // User is logged in AND is an admin
-  return children;
+  // User is logged in AND is an admin - render child routes
+  return <Outlet />;
 }

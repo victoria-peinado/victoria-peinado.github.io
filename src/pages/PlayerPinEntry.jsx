@@ -1,104 +1,71 @@
 // src/pages/PlayerPinEntry.jsx
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { db } from '../firebase';
-import { collection, query, where, getDocs } from 'firebase/firestore';
-import PlayerNavbar from '../components/layout/PlayerNavbar';
+import React from 'react';
+import { useTranslation } from 'react-i18next'; // 1. Import
+import { usePinEntry } from '../hooks/usePinEntry';
 
-// Note: We no longer need the 'useQuery' helper here
-// as the PIN will be captured in App.jsx
+// 2. Import our new UI Kit
+import FullScreenCenter from '../components/layout/FullScreenCenter';
+import { Card, CardContent, CardTitle } from '../components/ui/Card';
+import { Label } from '../components/ui/Label';
+import { Input } from '../components/ui/Input';
+import { Button } from '../components/ui/Button';
+import PlayerNavbar from '../components/layout/PlayerNavbar'; // We can keep this for the 'Exit' button
 
 export default function PlayerPinEntry() {
-  const [pin, setPin] = useState('');
-  const [error, setError] = useState('');
-  const [isJoining, setIsJoining] = useState(false);
-  const navigate = useNavigate();
-
-  // 1. This effect now runs once when the page loads
-  useEffect(() => {
-    // 2. Check session storage for a saved PIN
-    const savedPin = sessionStorage.getItem('gamePin');
-    
-    if (savedPin) {
-      setPin(savedPin.toUpperCase());
-    }
-  }, []); // Empty array means this runs only on mount
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!pin.trim()) return;
-
-    setIsJoining(true);
-    setError('');
-
-    try {
-      const pinUpper = pin.trim().toUpperCase();
-
-      const pinQuery = query(
-        collection(db, 'gameSessions'),
-        where('gamePinUpper', '==', pinUpper)
-      );
-
-      const snapshot = await getDocs(pinQuery);
-
-      if (snapshot.empty) {
-        setError('Game not found. Please check the PIN and try again.');
-        setIsJoining(false);
-        return;
-      }
-      
-      // 3. SUCCESS: Clear the saved PIN so it's not used again
-      sessionStorage.removeItem('gamePin');
-
-      const gameId = snapshot.docs[0].id;
-      navigate(`/play/${gameId}`);
-    } catch (err) {
-      console.error("Error finding game:", err);
-      setError('An error occurred. Please try again.');
-      setIsJoining(false);
-    }
-  };
+  const { t } = useTranslation(); // 3. Initialize
+  const { pin, setPin, error, isJoining, handleSubmit } = usePinEntry();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-600 to-blue-500 flex flex-col items-center justify-center p-4">
-      <PlayerNavbar />
-
-      <div className="flex-grow flex items-center justify-center w-full">
-        <div className="bg-white rounded-lg shadow-2xl p-8 w-full max-w-md">
-          <h1 className="text-4xl font-bold text-center mb-2 text-gray-800">
-            Join Game
-          </h1>
-          <p className="text-center text-gray-600 mb-6">
-            Enter the 5-character game PIN
+    // 4. Use FullScreenCenter layout
+    <FullScreenCenter>
+      {/* <PlayerNavbar />  We can actually remove this to make it cleaner */}
+      
+      {/* 5. Use Card component */}
+      <Card>
+        <CardContent className="p-8">
+          <CardTitle className="text-center mb-2">
+            {t('pinEntry.title')}
+          </CardTitle>
+          <p className="text-center text-neutral-200 mb-6">
+            {t('pinEntry.subtitle')}
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <input
-              type="text"
-              value={pin} // This will be filled from session storage
-              onChange={(e) => setPin(e.target.value.toUpperCase())}
-              placeholder="Enter PIN"
-              maxLength={5}
-              className="w-full px-4 py-3 text-2xl text-center uppercase border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
-              disabled={isJoining}
-            />
+            <div>
+              {/* 6. Use new Label and Input */}
+              <Label htmlFor="pin" className="sr-only">{t('pinEntry.label')}</Label>
+              <Input
+                type="text"
+                id="pin"
+                value={pin}
+                onChange={(e) => setPin(e.target.value.toUpperCase())}
+                placeholder={t('pinEntry.placeholder')}
+                maxLength={5}
+                // Use theme fonts and styles
+                className="text-2xl text-center uppercase font-display tracking-widest"
+                disabled={isJoining}
+              />
+            </div>
 
+            {/* 7. Use themed error message */}
             {error && (
-              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+              <div className="bg-secondary text-white px-4 py-3 rounded text-center">
                 {error}
               </div>
             )}
 
-            <button
+            {/* 8. Use new Button component */}
+            <Button
               type="submit"
+              variant="primary"
               disabled={isJoining || pin.trim().length === 0}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition duration-200"
+              className="w-full"
             >
-              {isJoining ? 'Joining...' : 'Join Game'}
-            </button>
+              {isJoining ? t('pinEntry.buttonLoading') : t('pinEntry.button')}
+            </Button>
           </form>
-        </div>
-      </div>
-    </div>
+        </CardContent>
+      </Card>
+    </FullScreenCenter>
   );
 }

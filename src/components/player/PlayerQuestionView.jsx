@@ -1,6 +1,8 @@
-// Update PlayerQuestionView.jsx to include timer
+// src/components/player/PlayerQuestionView.jsx
 import React from 'react';
+import { useTranslation } from 'react-i18next'; // 1. Import
 import Timer from '../common/Timer';
+import { Button } from '../ui/Button'; // 2. Import our new Button
 
 function PlayerQuestionView({
   gameSession,
@@ -10,21 +12,21 @@ function PlayerQuestionView({
   isSubmitting,
   selectedAnswer,
 }) {
+  const { t } = useTranslation(); // 3. Initialize
   const currentQuestion = questions[gameSession.currentQuestionIndex];
   const [timeExpired, setTimeExpired] = React.useState(false);
 
   if (!currentQuestion) {
     return (
-      <div className="text-center text-white">
-        <h2 className="text-3xl font-bold mb-4">All questions completed!</h2>
-        <p className="text-xl">Waiting for final results...</p>
+      <div className="text-center text-neutral-100">
+        <h2 className="text-3xl font-display font-bold mb-4">{t('player.question.allDoneTitle')}</h2>
+        <p className="text-xl">{t('player.question.allDoneSubtitle')}</p>
       </div>
     );
   }
 
   const handleAnswerClick = (answer) => {
     if (hasAnswered || isSubmitting || timeExpired) return;
-    
     onAnswerSelect({
       letter: answer.letter,
       correct: answer.letter === currentQuestion.correctLetter
@@ -44,64 +46,55 @@ function PlayerQuestionView({
         </div>
       )}
 
+      {/* Question Text */}
       <div className="text-center mb-8">
-        <div className="text-xl text-purple-200 mb-4">
-          Question {gameSession.currentQuestionIndex + 1}
+        <div className="text-xl font-display text-primary mb-4">
+          {t('player.question.header', { num: gameSession.currentQuestionIndex + 1 })}
         </div>
-        <h2 className="text-4xl font-bold text-white mb-8">
+        <h2 className="text-4xl font-display font-bold text-neutral-100 mb-8">
           {currentQuestion.question}
         </h2>
       </div>
 
+      {/* Status Banners (Themed) */}
       {hasAnswered && (
-        <div className="mb-6 p-4 bg-blue-600 rounded-lg text-center">
-          <p className="text-white font-semibold">
-            ✓ Answer submitted! Waiting for other players...
-          </p>
+        <div className="mb-6 p-4 bg-primary-dark rounded-lg text-center">
+          <p className="text-white font-semibold">{t('player.question.submitted')}</p>
         </div>
       )}
-
       {timeExpired && !hasAnswered && (
-        <div className="mb-6 p-4 bg-red-600 rounded-lg text-center">
-          <p className="text-white font-semibold">
-             Time's up! No answer submitted.
-          </p>
+        <div className="mb-6 p-4 bg-secondary rounded-lg text-center">
+          <p className="text-white font-semibold">{t('player.question.timeUp')}</p>
         </div>
       )}
 
-      {/* Answer choices */}
+      {/* Answer choices (Refactored) */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {currentQuestion.answers.map((answer) => {
           const isSelected = selectedAnswer === answer.letter;
           const isDisabled = hasAnswered || isSubmitting || timeExpired;
 
           return (
-            <button
+            // 4. Use our new Button component
+            <Button
               key={answer.letter}
               onClick={() => handleAnswerClick(answer)}
               disabled={isDisabled}
-              className={`
-                p-6 rounded-lg text-lg font-semibold transition-all
-                ${isSelected 
-                  ? 'bg-blue-600 text-white ring-4 ring-blue-300' 
-                  : 'bg-white text-gray-800 hover:bg-gray-100'
-                }
-                ${isDisabled 
-                  ? 'opacity-60 cursor-not-allowed' 
-                  : 'hover:scale-105 cursor-pointer'
-                }
-              `}
+              // Use 'primary' for selected, 'neutral' for others
+              variant={isSelected ? 'primary' : 'neutral'}
+              // Add classes for left-alignment and text size
+              className="text-lg text-left justify-start"
             >
               <span className="text-2xl font-bold mr-3">{answer.letter}.</span>
               {answer.text}
-            </button>
+            </Button>
           );
         })}
       </div>
 
       {isSubmitting && (
         <div className="mt-6 text-center">
-          <p className="text-white text-lg">Submitting your answer...</p>
+          <p className="text-neutral-100 text-lg">{t('player.question.submitting')}</p>
         </div>
       )}
     </div>
