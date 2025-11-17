@@ -35,7 +35,7 @@ export default function AdminGame() {
   // Logic hook - all state and handlers
   const {
     isBusy,
-    message,
+    // message, // 1. REMOVED message
     handleMessage,
     handleTimerExpire,
     handleShowQuestion,
@@ -88,18 +88,7 @@ export default function AdminGame() {
         </Link>
       </div>
 
-      {/* Message Display */}
-      {message.text && (
-        <div
-          className={`mb-4 p-4 rounded ${
-            message.type === 'error'
-              ? 'bg-secondary'
-              : 'bg-primary-dark text-white'
-          }`}
-        >
-          {message.text}
-        </div>
-      )}
+      {/* 2. REMOVED entire message.text block */}
 
       {/* Main Grid Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -126,18 +115,12 @@ export default function AdminGame() {
               <CardTitle className="mb-4">Current Status</CardTitle>
               <GameStatus gameSession={gameSession} />
               {gameSession.state === 'questionactive' &&
-                // --- FIX WAS HERE ---
-                // We must check for questionDuration, not timeLimit
                 gameSession.questionDuration &&
                 gameSession.questionStartTime && (
                   <div className="mt-4">
                     <Timer
-                      // --- AND HERE ---
-                      // The key must be the index, not an undefined "Id"
                       key={gameSession.currentQuestionIndex} 
                       startTime={gameSession.questionStartTime}
-                      // --- AND HERE ---
-                      // The duration prop is questionDuration
                       duration={gameSession.questionDuration} 
                       onExpire={handleTimerExpire}
                     />

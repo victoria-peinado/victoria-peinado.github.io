@@ -1,0 +1,136 @@
+Date : 2025-11-16 19:10:18
+Directory : c:\Users\colli\magic-trivia\src
+Total : 88 files,  5111 codes, 598 comments, 664 blanks, all 6373 lines
+
+Languages
++----------------+------------+------------+------------+------------+------------+
+| language       | files      | code       | comment    | blank      | total      |
++----------------+------------+------------+------------+------------+------------+
+| JavaScript JSX |         54 |      3,382 |        274 |        398 |      4,054 |
+| JavaScript     |         29 |      1,667 |        315 |        258 |      2,240 |
+| PostCSS        |          1 |         46 |          9 |          8 |         63 |
+| JSON           |          2 |          9 |          0 |          0 |          9 |
+| CSV            |          1 |          6 |          0 |          0 |          6 |
+| XML            |          1 |          1 |          0 |          0 |          1 |
++----------------+------------+------------+------------+------------+------------+
+
+Directories
++---------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| path                                                                      | files      | code       | comment    | blank      | total      |
++---------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| .                                                                         |         88 |      5,111 |        598 |        664 |      6,373 |
+| . (Files)                                                                 |          6 |        188 |         24 |         31 |        243 |
+| .vs                                                                       |          2 |          9 |          0 |          0 |          9 |
+| assets                                                                    |          1 |          1 |          0 |          0 |          1 |
+| components                                                                |         40 |      1,814 |        166 |        237 |      2,217 |
+| components\admin                                                          |          7 |        335 |         20 |         39 |        394 |
+| components\common                                                         |         11 |        615 |         49 |         86 |        750 |
+| components\layout                                                         |          8 |        308 |         27 |         44 |        379 |
+| components\player                                                         |          4 |        204 |         28 |         31 |        263 |
+| components\stream                                                         |          4 |        168 |         18 |         21 |        207 |
+| components\ui                                                             |          6 |        184 |         24 |         16 |        224 |
+| contexts                                                                  |          2 |        172 |         10 |         32 |        214 |
+| hooks                                                                     |         16 |      1,020 |        104 |        154 |      1,278 |
+| pages                                                                     |         10 |      1,302 |         87 |        114 |      1,503 |
+| services                                                                  |         10 |        579 |        198 |         94 |        871 |
+| services (Files)                                                          |          2 |         86 |         41 |         21 |        148 |
+| services\bank                                                             |          2 |        202 |         59 |         24 |        285 |
+| services\game                                                             |          3 |        175 |         60 |         34 |        269 |
+| services\player                                                           |          3 |        116 |         38 |         15 |        169 |
+| utils                                                                     |          1 |         26 |          9 |          2 |         37 |
++---------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+
+Files
++---------------------------------------------------------------------------+----------------+------------+------------+------------+------------+
+| filename                                                                  | language       | code       | comment    | blank      | total      |
++---------------------------------------------------------------------------+----------------+------------+------------+------------+------------+
+| c:\Users\colli\magic-trivia\src\.vs\ProjectSettings.json                  | JSON           |          3 |          0 |          0 |          3 |
+| c:\Users\colli\magic-trivia\src\.vs\VSWorkspaceState.json                 | JSON           |          6 |          0 |          0 |          6 |
+| c:\Users\colli\magic-trivia\src\App.jsx                                   | JavaScript JSX |         71 |         10 |         13 |         94 |
+| c:\Users\colli\magic-trivia\src\SampleBank.csv                            | CSV            |          6 |          0 |          0 |          6 |
+| c:\Users\colli\magic-trivia\src\assets\react.svg                          | XML            |          1 |          0 |          0 |          1 |
+| c:\Users\colli\magic-trivia\src\components\admin\AdminControls.jsx        | JavaScript JSX |         65 |          4 |          9 |         78 |
+| c:\Users\colli\magic-trivia\src\components\admin\BroadcastCard.jsx        | JavaScript JSX |         48 |          1 |          4 |         53 |
+| c:\Users\colli\magic-trivia\src\components\admin\CsvUploader.jsx          | JavaScript JSX |         41 |          3 |          4 |         48 |
+| c:\Users\colli\magic-trivia\src\components\admin\GameStatus.jsx           | JavaScript JSX |         52 |          5 |          9 |         66 |
+| c:\Users\colli\magic-trivia\src\components\admin\LivePlayerList.jsx       | JavaScript JSX |         53 |          2 |          5 |         60 |
+| c:\Users\colli\magic-trivia\src\components\admin\PlayerRow.jsx            | JavaScript JSX |         38 |          3 |          4 |         45 |
+| c:\Users\colli\magic-trivia\src\components\admin\ShareGameCard.jsx        | JavaScript JSX |         38 |          2 |          4 |         44 |
+| c:\Users\colli\magic-trivia\src\components\common\AdminMessageOverlay.jsx | JavaScript JSX |         29 |          1 |          4 |         34 |
+| c:\Users\colli\magic-trivia\src\components\common\ConfirmModal.jsx        | JavaScript JSX |         33 |          9 |          6 |         48 |
+| c:\Users\colli\magic-trivia\src\components\common\ErrorScreen.jsx         | JavaScript JSX |         13 |          1 |          2 |         16 |
+| c:\Users\colli\magic-trivia\src\components\common\FinalLeaderboard.jsx    | JavaScript JSX |        192 |         14 |         21 |        227 |
+| c:\Users\colli\magic-trivia\src\components\common\Leaderboard.jsx         | JavaScript JSX |         85 |          2 |          9 |         96 |
+| c:\Users\colli\magic-trivia\src\components\common\LoadingScreen.jsx       | JavaScript JSX |         12 |          1 |          2 |         15 |
+| c:\Users\colli\magic-trivia\src\components\common\LoadingSpinner.jsx      | JavaScript JSX |          0 |          0 |          1 |          1 |
+| c:\Users\colli\magic-trivia\src\components\common\PasswordResetModal.jsx  | JavaScript JSX |         73 |          8 |          8 |         89 |
+| c:\Users\colli\magic-trivia\src\components\common\Timer.jsx               | JavaScript JSX |         89 |          7 |         20 |        116 |
+| c:\Users\colli\magic-trivia\src\components\common\VolumeControl.jsx       | JavaScript JSX |         57 |          6 |          6 |         69 |
+| c:\Users\colli\magic-trivia\src\components\common\WelcomeModal.jsx        | JavaScript JSX |         32 |          0 |          7 |         39 |
+| c:\Users\colli\magic-trivia\src\components\layout\AdminLayout.jsx         | JavaScript JSX |         13 |          5 |          2 |         20 |
+| c:\Users\colli\magic-trivia\src\components\layout\AdminSidebar.jsx        | JavaScript JSX |         53 |          4 |          7 |         64 |
+| c:\Users\colli\magic-trivia\src\components\layout\FullScreenCenter.jsx    | JavaScript JSX |         11 |          2 |          1 |         14 |
+| c:\Users\colli\magic-trivia\src\components\layout\KioskLayout.jsx         | JavaScript JSX |          9 |          4 |          1 |         14 |
+| c:\Users\colli\magic-trivia\src\components\layout\MainLayout.jsx          | JavaScript JSX |         13 |          4 |          1 |         18 |
+| c:\Users\colli\magic-trivia\src\components\layout\Navbar.jsx              | JavaScript JSX |         75 |          1 |          8 |         84 |
+| c:\Users\colli\magic-trivia\src\components\layout\PlayerNavbar.jsx        | JavaScript JSX |        116 |          3 |         18 |        137 |
+| c:\Users\colli\magic-trivia\src\components\layout\ProtectedRoute.jsx      | JavaScript JSX |         18 |          4 |          6 |         28 |
+| c:\Users\colli\magic-trivia\src\components\player\PlayerAnswerView.jsx    | JavaScript JSX |         53 |         11 |         12 |         76 |
+| c:\Users\colli\magic-trivia\src\components\player\PlayerJoinForm.jsx      | JavaScript JSX |         48 |          5 |          6 |         59 |
+| c:\Users\colli\magic-trivia\src\components\player\PlayerQuestionView.jsx  | JavaScript JSX |         86 |          8 |         10 |        104 |
+| c:\Users\colli\magic-trivia\src\components\player\PlayerWaitingView.jsx   | JavaScript JSX |         17 |          4 |          3 |         24 |
+| c:\Users\colli\magic-trivia\src\components\stream\StreamAnswerView.jsx    | JavaScript JSX |         64 |          5 |          7 |         76 |
+| c:\Users\colli\magic-trivia\src\components\stream\StreamHeader.jsx        | JavaScript JSX |         32 |          3 |          5 |         40 |
+| c:\Users\colli\magic-trivia\src\components\stream\StreamQuestionView.jsx  | JavaScript JSX |         56 |          6 |          6 |         68 |
+| c:\Users\colli\magic-trivia\src\components\stream\StreamWaitingView.jsx   | JavaScript JSX |         16 |          4 |          3 |         23 |
+| c:\Users\colli\magic-trivia\src\components\ui\Button.jsx                  | JavaScript JSX |         48 |          9 |          6 |         63 |
+| c:\Users\colli\magic-trivia\src\components\ui\Card.jsx                    | JavaScript JSX |         40 |          3 |          4 |         47 |
+| c:\Users\colli\magic-trivia\src\components\ui\Input.jsx                   | JavaScript JSX |         21 |          2 |          1 |         24 |
+| c:\Users\colli\magic-trivia\src\components\ui\Label.jsx                   | JavaScript JSX |         11 |          2 |          1 |         14 |
+| c:\Users\colli\magic-trivia\src\components\ui\Modal.jsx                   | JavaScript JSX |         41 |          6 |          3 |         50 |
+| c:\Users\colli\magic-trivia\src\components\ui\Select.jsx                  | JavaScript JSX |         23 |          2 |          1 |         26 |
+| c:\Users\colli\magic-trivia\src\contexts\AudioContext.jsx                 | JavaScript JSX |        126 |          7 |         22 |        155 |
+| c:\Users\colli\magic-trivia\src\contexts\AuthContext.jsx                  | JavaScript JSX |         46 |          3 |         10 |         59 |
+| c:\Users\colli\magic-trivia\src\firebase.js                               | JavaScript     |         19 |          0 |          4 |         23 |
+| c:\Users\colli\magic-trivia\src\hooks\useAdminDashboard.js                | JavaScript     |        155 |         14 |         19 |        188 |
+| c:\Users\colli\magic-trivia\src\hooks\useAdminGame.js                     | JavaScript     |         88 |         11 |         11 |        110 |
+| c:\Users\colli\magic-trivia\src\hooks\useAdminQuestionBanks.js            | JavaScript     |        110 |         11 |         15 |        136 |
+| c:\Users\colli\magic-trivia\src\hooks\useAudio.js                         | JavaScript     |          9 |          0 |          1 |         10 |
+| c:\Users\colli\magic-trivia\src\hooks\useAuthForm.js                      | JavaScript     |         23 |          1 |          2 |         26 |
+| c:\Users\colli\magic-trivia\src\hooks\useCsvUploader.js                   | JavaScript     |         31 |          3 |          6 |         40 |
+| c:\Users\colli\magic-trivia\src\hooks\useGameSession.js                   | JavaScript     |         45 |          8 |          7 |         60 |
+| c:\Users\colli\magic-trivia\src\hooks\useLeaderboard.js                   | JavaScript     |          0 |          0 |          1 |          1 |
+| c:\Users\colli\magic-trivia\src\hooks\useLivePlayerList.js                | JavaScript     |         74 |          4 |         12 |         90 |
+| c:\Users\colli\magic-trivia\src\hooks\usePinEntry.js                      | JavaScript     |         49 |          6 |         14 |         69 |
+| c:\Users\colli\magic-trivia\src\hooks\usePlayerActions.js                 | JavaScript     |         65 |          6 |         10 |         81 |
+| c:\Users\colli\magic-trivia\src\hooks\usePlayerAuth.js                    | JavaScript     |         63 |          8 |          9 |         80 |
+| c:\Users\colli\magic-trivia\src\hooks\usePlayerJoin.js                    | JavaScript     |         34 |          6 |          8 |         48 |
+| c:\Users\colli\magic-trivia\src\hooks\usePlayerState.js                   | JavaScript     |         66 |          5 |         12 |         83 |
+| c:\Users\colli\magic-trivia\src\hooks\useQuestionBank.js                  | JavaScript     |         32 |          5 |          6 |         43 |
+| c:\Users\colli\magic-trivia\src\hooks\useQuestionBankEditor.js            | JavaScript     |        176 |         16 |         21 |        213 |
+| c:\Users\colli\magic-trivia\src\i18n.js                                   | JavaScript     |         23 |          4 |          4 |         31 |
+| c:\Users\colli\magic-trivia\src\index.css                                 | PostCSS        |         46 |          9 |          8 |         63 |
+| c:\Users\colli\magic-trivia\src\main.jsx                                  | JavaScript JSX |         23 |          1 |          2 |         26 |
+| c:\Users\colli\magic-trivia\src\pages\AdminDashboard.jsx                  | JavaScript JSX |        167 |          6 |         13 |        186 |
+| c:\Users\colli\magic-trivia\src\pages\AdminGame.jsx                       | JavaScript JSX |        130 |         22 |         16 |        168 |
+| c:\Users\colli\magic-trivia\src\pages\AdminQuestionBankEdit.jsx           | JavaScript JSX |        321 |         10 |         19 |        350 |
+| c:\Users\colli\magic-trivia\src\pages\AdminQuestionBanks.jsx              | JavaScript JSX |        180 |          7 |          9 |        196 |
+| c:\Users\colli\magic-trivia\src\pages\LandingPage.jsx                     | JavaScript JSX |         40 |          8 |          7 |         55 |
+| c:\Users\colli\magic-trivia\src\pages\LoginPage.jsx                       | JavaScript JSX |         97 |          5 |         11 |        113 |
+| c:\Users\colli\magic-trivia\src\pages\PlayerPage.jsx                      | JavaScript JSX |        120 |         11 |         15 |        146 |
+| c:\Users\colli\magic-trivia\src\pages\PlayerPinEntry.jsx                  | JavaScript JSX |         55 |          9 |          7 |         71 |
+| c:\Users\colli\magic-trivia\src\pages\SignupPage.jsx                      | JavaScript JSX |        103 |          3 |          8 |        114 |
+| c:\Users\colli\magic-trivia\src\pages\StreamPage.jsx                      | JavaScript JSX |         89 |          6 |          9 |        104 |
+| c:\Users\colli\magic-trivia\src\services\authService.js                   | JavaScript     |         23 |         18 |          5 |         46 |
+| c:\Users\colli\magic-trivia\src\services\bank\bankManagement.js           | JavaScript     |         69 |         26 |         11 |        106 |
+| c:\Users\colli\magic-trivia\src\services\bank\bankQuestions.js            | JavaScript     |        133 |         33 |         13 |        179 |
+| c:\Users\colli\magic-trivia\src\services\game\gameManagement.js           | JavaScript     |         64 |         27 |         13 |        104 |
+| c:\Users\colli\magic-trivia\src\services\game\gameMessaging.js            | JavaScript     |         22 |          6 |          2 |         30 |
+| c:\Users\colli\magic-trivia\src\services\game\gameState.js                | JavaScript     |         89 |         27 |         19 |        135 |
+| c:\Users\colli\magic-trivia\src\services\player\playerAdmin.js            | JavaScript     |         35 |         12 |          4 |         51 |
+| c:\Users\colli\magic-trivia\src\services\player\playerAuth.js             | JavaScript     |         59 |         22 |         10 |         91 |
+| c:\Users\colli\magic-trivia\src\services\player\playerGameplay.js         | JavaScript     |         22 |          4 |          1 |         27 |
+| c:\Users\colli\magic-trivia\src\services\scoringService.js                | JavaScript     |         63 |         23 |         16 |        102 |
+| c:\Users\colli\magic-trivia\src\utils\animations.js                       | JavaScript     |         26 |          9 |          2 |         37 |
+| Total                                                                     |                |      5,111 |        598 |        664 |      6,373 |
++---------------------------------------------------------------------------+----------------+------------+------------+------------+------------+

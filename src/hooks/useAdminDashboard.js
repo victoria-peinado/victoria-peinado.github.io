@@ -1,9 +1,10 @@
 // src/hooks/useAdminDashboard.js
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react'; // 1. Import useCallback
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
+import toast from 'react-hot-toast'; // 2. Import toast
 
 // UPDATED: Imports from new service locations
 import { getQuestionBanks } from '../services/bank/bankManagement';
@@ -22,16 +23,21 @@ export function useAdminDashboard() {
   const [selectedBankId, setSelectedBankId] = useState('');
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [message, setMessage] = useState({ text: '', type: '' });
+  // const [message, setMessage] = useState({ text: '', type: '' }); // 3. REMOVED message state
   const [questionCounts, setQuestionCounts] = useState({});
   const [newGameName, setNewGameName] = useState('');
+  const [newGameTheme, setNewGameTheme] = useState('default');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [gameToDelete, setGameToDelete] = useState(null);
 
-  const handleMessage = (text, type, duration = 3000) => {
-    setMessage({ text, type });
-    setTimeout(() => setMessage({ text: '', type: '' }), duration);
-  };
+  // 4. UPDATED handleMessage to use toast
+  const handleMessage = useCallback((text, type) => {
+    if (type === 'error') {
+      toast.error(text);
+    } else {
+      toast.success(text);
+    }
+  }, []); // Empty dependency array
 
   // Fetch question banks and their counts
   useEffect(() => {
@@ -63,7 +69,7 @@ export function useAdminDashboard() {
     if (currentUser) {
       fetchBanks();
     }
-  }, [currentUser]);
+  }, [currentUser, handleMessage]); // 5. Added handleMessage
 
   // Fetch games for admin
   useEffect(() => {
@@ -87,7 +93,7 @@ export function useAdminDashboard() {
     if (currentUser) {
       fetchGames();
     }
-  }, [currentUser]);
+  }, [currentUser, handleMessage]); // 6. Added handleMessage
 
   // All handlers are now here
   const handleDeleteClick = (gameId) => {
@@ -134,10 +140,17 @@ export function useAdminDashboard() {
     }
 
     try {
-      // UPDATED: Using new service
-      const gameId = await createNewGame(currentUser.uid, selectedBankId, newGameName);
+      // UPDATED: Pass the newGameTheme to the service
+      const gameId = await createNewGame(
+        currentUser.uid, 
+        selectedBankId, 
+        newGameName, 
+        newGameTheme 
+      );
       handleMessage('Game created successfully!', 'success');
       setNewGameName('');
+      // We don't reset the theme, as the admin might want to create another game
+      // with the same theme.
       navigate(`/admin/game/${gameId}`);
     } catch (error) {
       console.error('Error creating game:', error);
@@ -159,7 +172,7 @@ export function useAdminDashboard() {
   return {
     currentUser,
     loading,
-    message,
+    // message, // 7. REMOVED message from return
     questionBanks,
     selectedBankId,
     setSelectedBankId,
@@ -167,6 +180,8 @@ export function useAdminDashboard() {
     questionCounts,
     newGameName,
     setNewGameName,
+    newGameTheme,
+    setNewGameTheme,
     isModalOpen,
     handleCreateGame,
     handleOpenGame,

@@ -5,6 +5,50 @@
 @tailwind utilities;
 
 @layer base {
+  /* Step 1: Define CSS variables for all themes.
+    :root is the default "Primal Mana" theme.
+  */
+  :root {
+    --color-primary: #619A5A;
+    --color-primary-light: #8BC34A;
+    --color-primary-dark: #38703A;
+    --color-secondary: #D32F2F;
+    --color-secondary-dark: #B71C1C;
+    --color-accent-blue: #0D47A1;
+    --color-accent-white: #F5F5DC;
+    --color-accent-black: #212121;
+  }
+
+  /* "Solar Flare" Theme (Orange/Yellow) */
+  .theme-flare {
+    --color-primary: #FF9800;
+    --color-primary-light: #FFB74D;
+    --color-primary-dark: #F57C00;
+    --color-secondary: #FFEB3B;
+    --color-secondary-dark: #FBC02D;
+    --color-accent-blue: #0D47A1;
+    --color-accent-white: #F5F5DC;
+    --color-accent-black: #212121;
+  }
+
+  /* "Mana Void" Theme (Purple/Cyan) */
+  .theme-void {
+    --color-primary: #673AB7;
+    --color-primary-light: #9575CD;
+    --color-primary-dark: #512DA8;
+    --color-secondary: #00BCD4;
+    --color-secondary-dark: #0097A7;
+    --color-accent-blue: #0D47A1;
+    --color-accent-white: #F5F5DC;
+    --color-accent-black: #21212Such;
+  }
+  
+  /* We add a "default" class for consistency in the logic later */
+  .theme-default {
+    /* This class just uses the :root variables by default */
+  }
+
+
   body {
     /* Apply your new theme tokens from tailwind.config.js */
     @apply bg-neutral-900 text-neutral-100 font-body;

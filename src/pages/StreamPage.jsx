@@ -54,6 +54,9 @@ export default function StreamPage() {
     return <ErrorScreen message={t('error.gameNotFound')} />;
   }
 
+  // NEW: Get the theme from the game session [cite: 41]
+  const theme = gameSession.theme || 'default';
+
   const renderGameState = () => {
     switch (gameSession.state) {
       case 'waiting':
@@ -87,8 +90,9 @@ export default function StreamPage() {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-900 text-neutral-100 font-body 
-                    flex items-center justify-center p-8 relative">
+    // UPDATED: Dynamically add the theme class [cite: 45]
+    <div className={`theme-${theme} min-h-screen bg-neutral-900 text-neutral-100 font-body 
+                    flex items-center justify-center p-8 relative`}>
       
       <StreamHeader gamePin={gameSession.gamePin || gameId} />
 

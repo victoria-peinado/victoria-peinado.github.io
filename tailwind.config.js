@@ -7,20 +7,20 @@ export default {
   theme: {
     extend: {
       colors: {
-        // "Primal Mana" Theme
+        // "Primal Mana" Theme - Now defined by CSS Variables
         primary: {
-          DEFAULT: '#619A5A', 
-          'light': '#8BC34A', 
-          'dark': '#38703A',  
+          DEFAULT: 'var(--color-primary)', 
+          'light': 'var(--color-primary-light)', 
+          'dark': 'var(--color-primary-dark)',  
         },
         secondary: {
-          DEFAULT: '#D32F2F', 
-          'dark': '#B71C1C',
+          DEFAULT: 'var(--color-secondary)', 
+          'dark': 'var(--color-secondary-dark)',
         },
         accent: {
-          'blue': '#0D47A1',   
-          'white': '#F5F5DC',  
-          'black': '#212121',  
+          'blue': 'var(--color-accent-blue)',   
+          'white': 'var(--color-accent-white)',  
+          'black': 'var(--color-accent-black)',  
         },
         neutral: {
           '100': '#F5F5DC', 

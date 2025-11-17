@@ -4,9 +4,6 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAdminDashboard } from '../hooks/useAdminDashboard';
 
-// REMOVE THIS LINE:
-// import AdminLayout from '../components/layout/AdminLayout';
-
 import ConfirmModal from '../components/common/ConfirmModal';
 import { Card, CardContent, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -17,14 +14,16 @@ import { Select } from '../components/ui/Select';
 export default function AdminDashboard() {
   const { t } = useTranslation();
   const {
-    currentUser, loading, message, questionBanks,
+    currentUser, loading, /* message, */ // 1. REMOVED message
+    questionBanks,
     selectedBankId, setSelectedBankId, games,
-    newGameName, setNewGameName, isModalOpen,
+    newGameName, setNewGameName, 
+    newGameTheme, setNewGameTheme,
+    isModalOpen,
     handleCreateGame, handleOpenGame, handleDeleteClick,
     handleCloseModal, handleConfirmDelete, getBankDisplayName
   } = useAdminDashboard();
 
-  // REMOVE <AdminLayout> wrapper - just return the content directly
   return (
     <div>
       <div className="mb-6 flex justify-between items-center">
@@ -43,11 +42,7 @@ export default function AdminDashboard() {
         </Link>
       </div>
 
-      {message.text && (
-        <div className={`mb-4 p-4 rounded ${message.type === 'error' ? 'bg-secondary' : 'bg-primary-dark text-white'}`}>
-          {message.text}
-        </div>
-      )}
+      {/* 2. REMOVED entire message.text block */}
 
       <Card className="mb-8">
         <CardContent className="p-6">
@@ -91,6 +86,22 @@ export default function AdminDashboard() {
                   ))}
                 </Select>
               </div>
+
+              {/* --- NEW THEME SELECTOR --- */}
+              <div className="flex-1 min-w-[200px]">
+                <Label htmlFor="themeSelect">{t('admin.dashboard.themeSelectLabel')}</Label>
+                <Select
+                  id="themeSelect"
+                  value={newGameTheme}
+                  onChange={(e) => setNewGameTheme(e.target.value)}
+                >
+                  <option value="default">Default (Primal Mana)</option>
+                  <option value="flare">Solar Flare</option>
+                  <option value="void">Mana Void</option>
+                </Select>
+              </div>
+              {/* --- END NEW THEME SELECTOR --- */}
+
               <Button type="submit" variant="primary">
                 {t('admin.dashboard.createGameButton')}
               </Button>

@@ -79,24 +79,30 @@ export default function PlayerPage() {
   if (gameError) return <ErrorScreen message={gameError} />;
   if (!gameSession) return <ErrorScreen message={t('error.gameNotFound')} />;
 
+  // NEW: Get the theme from the game session [cite: 34]
+  const theme = gameSession.theme || 'default';
+
   // --- NOT JOINED YET ---
   if (!playerId) {
     return (
-      <FullScreenCenter>
-        <div className="max-w-md w-full">
-          {message.text && (
-            <div className={`mb-4 p-4 rounded text-white ${message.type === 'error' ? 'bg-secondary' : 'bg-primary-dark'}`}>
-              {message.text}
-            </div>
-          )}
-          <PlayerJoinForm
-            nickname={nickname}
-            onNicknameChange={setNickname}
-            onJoinGame={(e) => handleJoinGame(e, nickname)}
-            isJoining={isJoining}
-          />
-        </div>
-      </FullScreenCenter>
+      // We apply the theme here too, so the join page is themed
+      <div className={`theme-${theme}`}> 
+        <FullScreenCenter>
+          <div className="max-w-md w-full">
+            {message.text && (
+              <div className={`mb-4 p-4 rounded text-white ${message.type === 'error' ? 'bg-secondary' : 'bg-primary-dark'}`}>
+                {message.text}
+              </div>
+            )}
+            <PlayerJoinForm
+              nickname={nickname}
+              onNicknameChange={setNickname}
+              onJoinGame={(e) => handleJoinGame(e, nickname)}
+              isJoining={isJoining}
+            />
+          </div>
+        </FullScreenCenter>
+      </div>
     );
   }
 
@@ -119,7 +125,8 @@ export default function PlayerPage() {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-900 text-neutral-100 font-body p-8">
+    // UPDATED: Dynamically add the theme class [cite: 38]
+    <div className={`theme-${theme} min-h-screen bg-neutral-900 text-neutral-100 font-body p-8`}>
       <AdminMessageOverlay 
         message={adminMessage} 
         onClose={() => setAdminMessage(null)} 

@@ -1,8 +1,22 @@
 import React from 'react';
 import ConfirmModal from '../common/ConfirmModal';
 import { useLivePlayerList } from '../../hooks/useLivePlayerList';
-// Button is no longer used directly, so its import is removed
-import PlayerRow from './PlayerRow'; // 1. Import the new PlayerRow component
+import PlayerRow from './PlayerRow';
+
+// 1. NEW: Skeleton component for the loading state
+// This mimics the shape of a PlayerRow
+const PlayerRowSkeleton = () => (
+  <div className="flex items-center justify-between p-4 h-20 bg-neutral-800 rounded-lg animate-pulse">
+    <div className="flex flex-col space-y-2">
+      <div className="h-4 w-32 bg-neutral-700 rounded"></div>
+      <div className="h-3 w-24 bg-neutral-700 rounded"></div>
+    </div>
+    <div className="flex gap-2">
+      <div className="h-8 w-16 bg-neutral-700 rounded"></div>
+      <div className="h-8 w-16 bg-neutral-700 rounded"></div>
+    </div>
+  </div>
+);
 
 export default function LivePlayerList({ gameId }) {
   const {
@@ -16,8 +30,16 @@ export default function LivePlayerList({ gameId }) {
     handleMessageClick
   } = useLivePlayerList(gameId);
 
+  // 2. UPDATED: The loading block now shows the skeletons
   if (loading) {
-    return <div className="text-neutral-400">Loading players...</div>;
+    return (
+      <div className="space-y-2 max-h-96 overflow-y-auto">
+        {/* Render 5 skeletons as placeholders */}
+        {[...Array(5)].map((_, i) => (
+          <PlayerRowSkeleton key={i} />
+        ))}
+      </div>
+    );
   }
 
   return (
@@ -33,7 +55,6 @@ export default function LivePlayerList({ gameId }) {
           </p>
         ) : (
           <div className="space-y-2 max-h-96 overflow-y-auto">
-            {/* 2. Use the new PlayerRow component */}
             {players.map((player) => (
               <PlayerRow
                 key={player.id}

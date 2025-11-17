@@ -130,5 +130,6 @@
   "admin.banks.yourBanks": "Your Question Banks",
   "admin.banks.untitled": "Untitled Bank",
   "admin.banks.backButton": "Back to Dashboard",
-  "admin.banks.modal.confirmText": "Delete Bank"
+  "admin.banks.modal.confirmText": "Delete Bank",
+  "admin.dashboard.themeSelectLabel": "Theme"
 }

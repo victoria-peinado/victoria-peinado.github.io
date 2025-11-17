@@ -1,6 +1,7 @@
 // src/App.jsx
-import React, { useEffect, lazy, Suspense } from 'react'; // Added lazy and Suspense
+import React, { useEffect, lazy, Suspense } from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { ErrorBoundary } from 'react-error-boundary'; // 1. Import ErrorBoundary
 import { useAudio } from './hooks/useAudio';
 import WelcomeModal from './components/common/WelcomeModal';
 
@@ -10,8 +11,9 @@ import MainLayout from './components/layout/MainLayout';
 import KioskLayout from './components/layout/KioskLayout';
 import AdminLayout from './components/layout/AdminLayout';
 
-// Import the fallback component
+// Import the fallback components
 import LoadingScreen from './components/common/LoadingScreen';
+import ErrorScreen from './components/common/ErrorScreen'; // 2. Import ErrorScreen
 
 // --- Page Imports are now LAZY-LOADED ---
 const LandingPage = lazy(() => import('./pages/LandingPage'));
@@ -56,39 +58,42 @@ export default function App() {
         onConfirm={handleWelcomeConfirm}
       />
 
-      <HashRouter>
-        {/* Wrap the Routes in Suspense to enable lazy loading */}
-        <Suspense fallback={<LoadingScreen />}>
-          <Routes>
-            {/* Routes WITH Main Navbar (Login, Admin, etc.) */}
-            <Route element={<MainLayout />}>
-              <Route path="/" element={<LandingPage />} />
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/signup" element={<SignupPage />} />
-            </Route>
-
-            {/* Protected Admin Routes - NOW WRAPPED IN AdminLayout */}
-            <Route element={<ProtectedRoute />}>
-              <Route element={<AdminLayout />}>
-                <Route path="/admin" element={<AdminDashboard />} />
-                <Route path="/admin/game/:gameId" element={<AdminGame />} />
-                <Route path="/admin/question-banks" element={<AdminQuestionBanks />} />
-                <Route path="/admin/question-banks/:bankId" element={<AdminQuestionBankEdit />} />
+      {/* 3. Wrap HashRouter in the ErrorBoundary */}
+      <ErrorBoundary FallbackComponent={ErrorScreen}>
+        <HashRouter>
+          {/* Wrap the Routes in Suspense to enable lazy loading */}
+          <Suspense fallback={<LoadingScreen />}>
+            <Routes>
+              {/* Routes WITH Main Navbar (Login, Admin, etc.) */}
+              <Route element={<MainLayout />}>
+                <Route path="/" element={<LandingPage />} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/signup" element={<SignupPage />} />
               </Route>
-            </Route>
 
-            {/* Routes WITHOUT Main Navbar (Player/Stream Kiosk Mode) */}
-            <Route element={<KioskLayout />}>
-              <Route path="/play" element={<PlayerPinEntry />} />
-              <Route path="/player/:gameId" element={<PlayerPage />} />
-              <Route path="/stream/:gameId" element={<StreamPage />} />
-            </Route>
+              {/* Protected Admin Routes - NOW WRAPPED IN AdminLayout */}
+              <Route element={<ProtectedRoute />}>
+                <Route element={<AdminLayout />}>
+                  <Route path="/admin" element={<AdminDashboard />} />
+                  <Route path="/admin/game/:gameId" element={<AdminGame />} />
+                  <Route path="/admin/question-banks" element={<AdminQuestionBanks />} />
+                  <Route path="/admin/question-banks/:bankId" element={<AdminQuestionBankEdit />} />
+                </Route>
+              </Route>
 
-            {/* Catch-all redirect */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </Suspense>
-      </HashRouter>
+              {/* Routes WITHOUT Main Navbar (Player/Stream Kiosk Mode) */}
+              <Route element={<KioskLayout />}>
+                <Route path="/play" element={<PlayerPinEntry />} />
+                <Route path="/player/:gameId" element={<PlayerPage />} />
+                <Route path="/stream/:gameId" element={<StreamPage />} />
+              </Route>
+
+              {/* Catch-all redirect */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </Suspense>
+        </HashRouter>
+      </ErrorBoundary>
     </AppInitializer>
   );
 }

@@ -18,8 +18,10 @@ import {
  * @param {string} adminId - The UID of the admin creating the game.
  * @param {string} questionBankId - The ID of the question bank to use.
  * @param {string} gameName - The custom name for the game.
+ * @param {string} theme - The selected theme name (e.g., 'default', 'flare')
  */
-export const createNewGame = async (adminId, questionBankId, gameName) => {
+// --- MAKE SURE 'export' IS HERE ---
+export const createNewGame = async (adminId, questionBankId, gameName, theme) => { 
   try {
     // New top-level collection
     const gameSessionRef = doc(collection(db, 'gameSessions'));
@@ -38,7 +40,8 @@ export const createNewGame = async (adminId, questionBankId, gameName) => {
       state: 'waiting',
       currentQuestionIndex: 0,
       createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp()
+      updatedAt: serverTimestamp(),
+      theme: theme || 'default' // Add the theme to the game document
     });
 
     return gameSessionId;
@@ -52,6 +55,7 @@ export const createNewGame = async (adminId, questionBankId, gameName) => {
  * Fetches all games created by a specific admin, sorted newest first.
  * @param {string} adminId - The UID of the admin.
  */
+// --- MAKE SURE 'export' IS HERE ---
 export const getGamesForAdmin = (adminId) => {
   const gamesRef = collection(db, 'gameSessions');
   const q = query(
@@ -66,6 +70,7 @@ export const getGamesForAdmin = (adminId) => {
  * Deletes a game session AND all its sub-collections (e.g., players).
  * @param {string} gameId - The game session ID to delete.
  */
+// --- MAKE SURE 'export' IS HERE ---
 export const deleteGame = async (gameId) => {
   if (!gameId) throw new Error('No game ID provided.');
   

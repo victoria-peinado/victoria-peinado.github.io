@@ -1,5 +1,6 @@
 // src/hooks/useAdminGame.js
-import { useState, useEffect, useCallback } from 'react'; // 1. Import useCallback
+import { useState, useEffect, useCallback } from 'react';
+import toast from 'react-hot-toast'; // 1. Import toast
 import {
   showQuestion,
   revealAnswer,
@@ -9,13 +10,18 @@ import {
 
 export function useAdminGame(gameSession, gameId, questions) {
   const [isBusy, setIsBusy] = useState(false);
-  const [message, setMessage] = useState({ text: '', type: '' });
+  // const [message, setMessage] = useState({ text: '', type: '' }); // 2. REMOVED message state
   const [autoRevealTriggered, setAutoRevealTriggered] = useState(false);
 
-  // 2. Wrap handleMessage in useCallback
-  const handleMessage = useCallback((text, type, duration = 3000) => {
-    setMessage({ text, type });
-    setTimeout(() => setMessage({ text: '', type: '' }), duration);
+  // 3. UPDATED handleMessage to use toast
+  const handleMessage = useCallback((text, type) => {
+    if (type === 'error') {
+      toast.error(text);
+    } else if (type === 'info') {
+      toast(text); // Use default toast for info
+    } else {
+      toast.success(text); // Default to success
+    }
   }, []); // Empty dependency array
 
   // Resets the auto-reveal trigger when a new question is shown
@@ -25,7 +31,6 @@ export function useAdminGame(gameSession, gameId, questions) {
     }
   }, [gameSession?.currentQuestionIndex, gameSession?.state]);
 
-  // 3. Wrap handleTimerExpire in useCallback
   const handleTimerExpire = useCallback(async () => {
     if (autoRevealTriggered || isBusy) return;
     
@@ -41,10 +46,8 @@ export function useAdminGame(gameSession, gameId, questions) {
     } finally {
       setIsBusy(false);
     }
-  // 4. Add all dependencies for the callback
   }, [autoRevealTriggered, isBusy, gameSession, handleMessage]);
 
-  // 5. Wrap handleShowQuestion in useCallback
   const handleShowQuestion = useCallback(async () => {
     setIsBusy(true);
     handleMessage('Showing question...', 'info', 2000);
@@ -61,10 +64,8 @@ export function useAdminGame(gameSession, gameId, questions) {
     } finally {
       setIsBusy(false);
     }
-  // 6. Add all dependencies
   }, [gameSession, questions, handleMessage]);
 
-  // 7. Wrap handleShowLeaderboard in useCallback
   const handleShowLeaderboard = useCallback(async () => {
     setIsBusy(true);
     handleMessage('Showing leaderboard...', 'info', 2000);
@@ -76,10 +77,8 @@ export function useAdminGame(gameSession, gameId, questions) {
     } finally {
       setIsBusy(false);
     }
-  // 8. Add all dependencies
   }, [gameSession, handleMessage]);
 
-  // 9. Wrap handleEndGame in useCallback
   const handleEndGame = useCallback(async () => {
     if (!confirm('Are you sure you want to end the game?')) {
       return;
@@ -95,13 +94,12 @@ export function useAdminGame(gameSession, gameId, questions) {
     } finally {
       setIsBusy(false);
     }
-  // 10. Add all dependencies
   }, [gameSession, handleMessage]);
 
   return {
     isBusy,
-    message,
-    handleMessage,
+    // message, // 4. REMOVED message from return
+    handleMessage, // Keep this, as BroadcastCard needs it
     handleTimerExpire,
     handleShowQuestion,
     handleShowLeaderboard,
