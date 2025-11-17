@@ -1,8 +1,8 @@
-// src/components/admin/LivePlayerList.jsx
 import React from 'react';
 import ConfirmModal from '../common/ConfirmModal';
 import { useLivePlayerList } from '../../hooks/useLivePlayerList';
-import { Button } from '../ui/Button';
+// Button is no longer used directly, so its import is removed
+import PlayerRow from './PlayerRow'; // 1. Import the new PlayerRow component
 
 export default function LivePlayerList({ gameId }) {
   const {
@@ -33,41 +33,14 @@ export default function LivePlayerList({ gameId }) {
           </p>
         ) : (
           <div className="space-y-2 max-h-96 overflow-y-auto">
+            {/* 2. Use the new PlayerRow component */}
             {players.map((player) => (
-              <div
+              <PlayerRow
                 key={player.id}
-                className="flex items-center justify-between p-3 bg-neutral-800 rounded-lg hover:bg-neutral-700 transition border border-neutral-700"
-              >
-                <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <div className="w-2 h-2 bg-primary-light rounded-full flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-neutral-100 truncate">
-                      {player.nickname}
-                    </p>
-                    <p className="text-xs text-neutral-400 font-mono">
-                      {player.score || 0} pts
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <Button
-                    onClick={() => handleMessageClick(player)}
-                    variant="secondary"
-                    className="py-1 px-3 text-xs"
-                  >
-                    Message
-                  </Button>
-                  
-                  <Button
-                    onClick={() => handleKickClick(player)}
-                    variant="danger"
-                    className="py-1 px-3 text-xs"
-                  >
-                    Kick
-                  </Button>
-                </div>
-              </div>
+                player={player}
+                onMessageClick={handleMessageClick} // Pass the handler
+                onKickClick={handleKickClick}       // Pass the handler
+              />
             ))}
           </div>
         )}

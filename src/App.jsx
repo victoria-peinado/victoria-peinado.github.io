@@ -1,26 +1,29 @@
 // src/App.jsx
-import React, { useEffect } from 'react';
+import React, { useEffect, lazy, Suspense } from 'react'; // Added lazy and Suspense
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { useAudio } from './hooks/useAudio'; // 1. Import useAudio
-import WelcomeModal from './components/common/WelcomeModal'; // 2. Import WelcomeModal
+import { useAudio } from './hooks/useAudio';
+import WelcomeModal from './components/common/WelcomeModal';
 
-// ... (Layout Imports are unchanged) ...
+// Layout Imports are NOT lazy-loaded
 import ProtectedRoute from './components/layout/ProtectedRoute';
 import MainLayout from './components/layout/MainLayout';
 import KioskLayout from './components/layout/KioskLayout';
 import AdminLayout from './components/layout/AdminLayout';
 
-// ... (Page Imports are unchanged) ...
-import LandingPage from './pages/LandingPage';
-import StreamPage from './pages/StreamPage';
-import PlayerPinEntry from './pages/PlayerPinEntry';
-import PlayerPage from './pages/PlayerPage';
-import LoginPage from './pages/LoginPage';
-import SignupPage from './pages/SignupPage';
-import AdminDashboard from './pages/AdminDashboard';
-import AdminGame from './pages/AdminGame';
-import AdminQuestionBanks from './pages/AdminQuestionBanks';
-import AdminQuestionBankEdit from './pages/AdminQuestionBankEdit';
+// Import the fallback component
+import LoadingScreen from './components/common/LoadingScreen';
+
+// --- Page Imports are now LAZY-LOADED ---
+const LandingPage = lazy(() => import('./pages/LandingPage'));
+const StreamPage = lazy(() => import('./pages/StreamPage'));
+const PlayerPinEntry = lazy(() => import('./pages/PlayerPinEntry'));
+const PlayerPage = lazy(() => import('./pages/PlayerPage'));
+const LoginPage = lazy(() => import('./pages/LoginPage'));
+const SignupPage = lazy(() => import('./pages/SignupPage'));
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
+const AdminGame = lazy(() => import('./pages/AdminGame'));
+const AdminQuestionBanks = lazy(() => import('./pages/AdminQuestionBanks'));
+const AdminQuestionBankEdit = lazy(() => import('./pages/AdminQuestionBankEdit'));
 
 // ... (AppInitializer is unchanged) ...
 function AppInitializer({ children }) {
@@ -39,52 +42,52 @@ function AppInitializer({ children }) {
 }
 
 export default function App() {
-  // 3. Get the global audio unlock state and function
   const { isUnlocked, unlockAudio, setMusic } = useAudio();
 
-  // 4. Create the confirm handler for the modal
   const handleWelcomeConfirm = () => {
-    unlockAudio(); // This will set isUnlocked = true
-    setMusic('music_ambient.mp3'); // Play ambient music
+    unlockAudio();
+    setMusic('music_ambient.mp3');
   };
 
   return (
     <AppInitializer>
-      {/* 5. Render the global modal ON TOP of the app */}
       <WelcomeModal
         isOpen={!isUnlocked}
         onConfirm={handleWelcomeConfirm}
       />
 
       <HashRouter>
-        <Routes>
-          {/* Routes WITH Main Navbar (Login, Admin, etc.) */}
-          <Route element={<MainLayout />}>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/signup" element={<SignupPage />} />
-          </Route>
-
-          {/* Protected Admin Routes - NOW WRAPPED IN AdminLayout */}
-          <Route element={<ProtectedRoute />}>
-            <Route element={<AdminLayout />}>
-              <Route path="/admin" element={<AdminDashboard />} />
-              <Route path="/admin/game/:gameId" element={<AdminGame />} />
-              <Route path="/admin/question-banks" element={<AdminQuestionBanks />} />
-              <Route path="/admin/question-banks/:bankId" element={<AdminQuestionBankEdit />} />
+        {/* Wrap the Routes in Suspense to enable lazy loading */}
+        <Suspense fallback={<LoadingScreen />}>
+          <Routes>
+            {/* Routes WITH Main Navbar (Login, Admin, etc.) */}
+            <Route element={<MainLayout />}>
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/signup" element={<SignupPage />} />
             </Route>
-          </Route>
 
-          {/* Routes WITHOUT Main Navbar (Player/Stream Kiosk Mode) */}
-          <Route element={<KioskLayout />}>
-            <Route path="/play" element={<PlayerPinEntry />} />
-            <Route path="/player/:gameId" element={<PlayerPage />} />
-            <Route path="/stream/:gameId" element={<StreamPage />} />
-          </Route>
+            {/* Protected Admin Routes - NOW WRAPPED IN AdminLayout */}
+            <Route element={<ProtectedRoute />}>
+              <Route element={<AdminLayout />}>
+                <Route path="/admin" element={<AdminDashboard />} />
+                <Route path="/admin/game/:gameId" element={<AdminGame />} />
+                <Route path="/admin/question-banks" element={<AdminQuestionBanks />} />
+                <Route path="/admin/question-banks/:bankId" element={<AdminQuestionBankEdit />} />
+              </Route>
+            </Route>
 
-          {/* Catch-all redirect */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+            {/* Routes WITHOUT Main Navbar (Player/Stream Kiosk Mode) */}
+            <Route element={<KioskLayout />}>
+              <Route path="/play" element={<PlayerPinEntry />} />
+              <Route path="/player/:gameId" element={<PlayerPage />} />
+              <Route path="/stream/:gameId" element={<StreamPage />} />
+            </Route>
+
+            {/* Catch-all redirect */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Suspense>
       </HashRouter>
     </AppInitializer>
   );

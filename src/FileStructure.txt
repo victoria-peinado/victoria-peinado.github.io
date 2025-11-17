@@ -5,6 +5,18 @@
 |   +---.qodo
 |   |   +---agents
 |   |   \---workflows
+|   +---audio
+|   |       click.wav
+|   |       correct.wav
+|   |       fanfare.wav
+|   |       incorrect.wav
+|   |       music_ambient.mp3
+|   |       music_lobby.mp3
+|   |       music_question.mp3
+|   |       question_reveal.wav
+|   |       timer_tick.wav
+|   |       times_up.wav
+|   |
 |   \---locales
 |       \---en
 |               translation.json
@@ -35,6 +47,7 @@
     |   |       CsvUploader.jsx
     |   |       GameStatus.jsx
     |   |       LivePlayerList.jsx
+    |   |       PlayerRow.jsx
     |   |       ShareGameCard.jsx
     |   |
     |   +---common
@@ -47,6 +60,8 @@
     |   |       LoadingSpinner.jsx
     |   |       PasswordResetModal.jsx
     |   |       Timer.jsx
+    |   |       VolumeControl.jsx
+    |   |       WelcomeModal.jsx
     |   |
     |   +---layout
     |   |       AdminLayout.jsx
@@ -79,12 +94,14 @@
     |           Select.jsx
     |
     +---contexts
+    |       AudioContext.jsx
     |       AuthContext.jsx
     |
     +---hooks
     |       useAdminDashboard.js
     |       useAdminGame.js
     |       useAdminQuestionBanks.js
+    |       useAudio.js
     |       useAuthForm.js
     |       useCsvUploader.js
     |       useGameSession.js

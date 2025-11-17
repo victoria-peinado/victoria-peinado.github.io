@@ -1,14 +1,15 @@
 // src/components/common/Leaderboard.jsx
-import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next'; // 1. Import
+import React, { useState, useEffect, memo } from 'react'; // 1. Import memo
+import { useTranslation } from 'react-i18next';
 import { db } from '../../firebase';
 import { collection, query, orderBy, onSnapshot, limit } from 'firebase/firestore';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LabelList } from 'recharts';
 
-export default function Leaderboard({ gameId }) {
+// 2. Wrap the component function in memo()
+export default memo(function Leaderboard({ gameId }) {
   const [leaderboard, setLeaderboard] = useState([]);
   const [loading, setLoading] = useState(true);
-  const { t } = useTranslation(); // 2. Initialize
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (!gameId) {
@@ -29,7 +30,6 @@ export default function Leaderboard({ gameId }) {
     return () => unsubscribe();
   }, [gameId]);
 
-  // 3. Use theme colors for bars
   const getBarColor = (rank) => {
     switch(rank) {
       case 1: return '#619A5A'; // Primary (Green)
@@ -39,7 +39,6 @@ export default function Leaderboard({ gameId }) {
     }
   };
 
-  // 4. Render with new theme
   if (loading) {
     return <div className="text-center text-neutral-100 p-8"><p className="text-xl">{t('leaderboard.loading')}</p></div>;
   }
@@ -58,7 +57,6 @@ export default function Leaderboard({ gameId }) {
   }));
 
   return (
-    // 5. Use new theme background, border, and fonts
     <div className="bg-neutral-800 bg-opacity-70 rounded-lg p-6 w-full max-w-4xl mx-auto 
                     border-2 border-neutral-700 backdrop-blur-sm">
       <h2 className="text-4xl font-display font-bold text-neutral-100 mb-8 text-center">
@@ -67,10 +65,8 @@ export default function Leaderboard({ gameId }) {
       
       <ResponsiveContainer width="100%" height={400}>
         <BarChart data={chartData} margin={{ top: 30, right: 30, left: 20, bottom: 5 }}>
-          {/* Use neutral-700 for grid */}
           <CartesianGrid strokeDasharray="3 3" stroke="#4E342E" vertical={false} />
           
-          {/* Use parchment color for ticks */}
           <XAxis dataKey="name" stroke="#F5F5DC" tick={{ fill: '#F5F5DC' }} />
           <YAxis stroke="#F5F5DC" tick={{ fill: '#F5F5DC' }} />
 
@@ -97,4 +93,4 @@ export default function Leaderboard({ gameId }) {
       </ResponsiveContainer>
     </div>
   );
-}
+});
