@@ -1,5 +1,5 @@
 // src/pages/PlayerPage.jsx
-import React, { useState, useEffect } from 'react'; // 1. Import useEffect
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
@@ -11,7 +11,7 @@ import { usePlayerAuth } from '../hooks/usePlayerAuth';
 import { usePlayerJoin } from '../hooks/usePlayerJoin';
 import { usePlayerState } from '../hooks/usePlayerState';
 import { usePlayerActions } from '../hooks/usePlayerActions';
-import { useAudio } from '../hooks/useAudio'; // 2. Import useAudio
+import { useAudio } from '../hooks/useAudio';
 
 // --- IMPORT COMPONENTS ---
 import PlayerJoinForm from '../components/player/PlayerJoinForm';
@@ -30,7 +30,7 @@ export default function PlayerPage() {
   const { gameId } = useParams();
   const { t } = useTranslation();
   const { currentUser, loading: authLoading } = useAuth();
-  const { setMusic } = useAudio(); // 3. Get setMusic
+  const { setMusic } = useAudio();
   
   const [message, setMessage] = useState({ text: '', type: '' });
   const handleMessage = (text, type, duration = 3000) => {
@@ -50,28 +50,16 @@ export default function PlayerPage() {
   const { adminMessage, setAdminMessage } = usePlayerState(gameId, playerId, gameSession);
   const { selectedAnswer, hasAnswered, isSubmitting, handleAnswerSubmit } = usePlayerActions(gameId, playerId, gameSession, handleMessage);
 
-  // 4. NEW: Add state-driven music logic
   useEffect(() => {
     if (!gameSession) return;
-
     switch (gameSession.state) {
-      case 'waiting':
-        setMusic('music_lobby.mp3');
-        break;
-      case 'questionactive':
-        setMusic('music_question.mp3');
-        break;
-      case 'answerrevealed':
-      case 'leaderboard':
-        setMusic('music_lobby.mp3');
-        break;
-      case 'finished':
-        // FinalLeaderboard component handles its own music
-        break;
+      case 'waiting': setMusic('music_lobby.mp3'); break;
+      case 'questionactive': setMusic('music_question.mp3'); break;
+      case 'answerrevealed': case 'leaderboard': setMusic('music_lobby.mp3'); break;
+      case 'finished': break;
       default:
-        // Do nothing for unknown states
     }
-  }, [gameSession?.state, setMusic]); // Re-run when state or setMusic changes
+  }, [gameSession?.state, setMusic]);
 
   if (authLoading || gameLoading || isVerifying) {
     return <LoadingScreen message={t('loading.game')} />;
@@ -79,14 +67,25 @@ export default function PlayerPage() {
   if (gameError) return <ErrorScreen message={gameError} />;
   if (!gameSession) return <ErrorScreen message={t('error.gameNotFound')} />;
 
-  // NEW: Get the theme from the game session [cite: 34]
+  // --- NEW THEME LOGIC ---
   const theme = gameSession.theme || 'default';
+  const customThemeData = gameSession.customThemeData || null;
+
+  // Define the style object to override CSS variables
+  const themeStyles = (theme === 'custom' && customThemeData) ? {
+    '--color-primary': customThemeData.primary,
+    '--color-primary-light': customThemeData.primaryLight,
+    '--color-primary-dark': customThemeData.primaryDark,
+    '--color-secondary': customThemeData.secondary,
+    '--color-secondary-dark': customThemeData.secondaryDark,
+  } : {};
+  // --- END NEW THEME LOGIC ---
 
   // --- NOT JOINED YET ---
   if (!playerId) {
     return (
-      // We apply the theme here too, so the join page is themed
-      <div className={`theme-${theme}`}> 
+      // Apply theme and custom styles to the join page
+      <div className={`theme-${theme}`} style={themeStyles}> 
         <FullScreenCenter>
           <div className="max-w-md w-full">
             {message.text && (
@@ -125,8 +124,11 @@ export default function PlayerPage() {
   };
 
   return (
-    // UPDATED: Dynamically add the theme class [cite: 38]
-    <div className={`theme-${theme} min-h-screen bg-neutral-900 text-neutral-100 font-body p-8`}>
+    // Apply theme and custom styles to the main game page
+    <div 
+      className={`theme-${theme} min-h-screen bg-neutral-900 text-neutral-100 font-body p-8`}
+      style={themeStyles}
+    >
       <AdminMessageOverlay 
         message={adminMessage} 
         onClose={() => setAdminMessage(null)} 

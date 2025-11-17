@@ -18,20 +18,17 @@ import {
  * @param {string} adminId - The UID of the admin creating the game.
  * @param {string} questionBankId - The ID of the question bank to use.
  * @param {string} gameName - The custom name for the game.
- * @param {string} theme - The selected theme name (e.g., 'default', 'flare')
+ * @param {string|object} themeOrData - The selected theme name (e.g., 'flare') or a custom theme object.
  */
-// --- MAKE SURE 'export' IS HERE ---
-export const createNewGame = async (adminId, questionBankId, gameName, theme) => { 
+export const createNewGame = async (adminId, questionBankId, gameName, themeOrData) => { 
   try {
-    // New top-level collection
     const gameSessionRef = doc(collection(db, 'gameSessions'));
     const gameSessionId = gameSessionRef.id;
+    const gamePin = gameSessionId.substring(0, 5);
+    const gamePinUpper = gamePin.toUpperCase();
 
-    // Create two PIN versions
-    const gamePin = gameSessionId.substring(0, 5); // e.g., "sxq9O" (for display)
-    const gamePinUpper = gamePin.toUpperCase(); // e.g., "SXQ9O" (for lookup)
-
-    await setDoc(gameSessionRef, {
+    // --- NEW LOGIC FOR THEMES ---
+    let gameData = {
       adminId: adminId,
       questionBankId: questionBankId,
       gameName: gameName || 'Untitled Game',
@@ -41,8 +38,19 @@ export const createNewGame = async (adminId, questionBankId, gameName, theme) =>
       currentQuestionIndex: 0,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
-      theme: theme || 'default' // Add the theme to the game document
-    });
+    };
+
+    if (typeof themeOrData === 'object' && themeOrData !== null) {
+      // It's a custom theme object
+      gameData.theme = 'custom';
+      gameData.customThemeData = themeOrData;
+    } else {
+      // It's a theme name string (e.g., "flare", "default")
+      gameData.theme = themeOrData || 'default';
+    }
+    // --- END NEW LOGIC ---
+
+    await setDoc(gameSessionRef, gameData);
 
     return gameSessionId;
   } catch (error) {
@@ -53,9 +61,7 @@ export const createNewGame = async (adminId, questionBankId, gameName, theme) =>
 
 /**
  * Fetches all games created by a specific admin, sorted newest first.
- * @param {string} adminId - The UID of the admin.
  */
-// --- MAKE SURE 'export' IS HERE ---
 export const getGamesForAdmin = (adminId) => {
   const gamesRef = collection(db, 'gameSessions');
   const q = query(
@@ -68,37 +74,28 @@ export const getGamesForAdmin = (adminId) => {
 
 /**
  * Deletes a game session AND all its sub-collections (e.g., players).
- * @param {string} gameId - The game session ID to delete.
  */
-// --- MAKE SURE 'export' IS HERE ---
 export const deleteGame = async (gameId) => {
   if (!gameId) throw new Error('No game ID provided.');
   
   const gameRef = doc(db, 'gameSessions', gameId);
-  // Define the path to the sub-collection
   const playersRef = collection(db, 'gameSessions', gameId, 'players');
 
   try {
-    // 1. Delete all documents in the 'players' sub-collection
     const playersSnapshot = await getDocs(playersRef);
     const batch = writeBatch(db);
     
     playersSnapshot.forEach((doc) => {
-      // Add each player's deletion to the batch
       batch.delete(doc.ref);
     });
     
-    // Commit the batch delete for all players
     await batch.commit(); 
-    
-    // 2. After sub-collection is deleted, delete the main game document
     await deleteDoc(gameRef);
     
     console.log(`Game ${gameId} and all players deleted successfully.`);
 
   } catch (error) {
     console.error('Error deleting game and its sub-collections:', error);
-    // Rethrow the error so the dashboard can catch it and show a message
     throw new Error('Failed to delete game.');
   }
 };

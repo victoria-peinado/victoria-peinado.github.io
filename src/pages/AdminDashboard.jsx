@@ -10,15 +10,17 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Label } from '../components/ui/Label';
 import { Select } from '../components/ui/Select';
+import { CustomThemeForm } from '../components/admin/CustomThemeForm';
 
 export default function AdminDashboard() {
   const { t } = useTranslation();
   const {
-    currentUser, loading, /* message, */ // 1. REMOVED message
+    currentUser, loading,
     questionBanks,
     selectedBankId, setSelectedBankId, games,
     newGameName, setNewGameName, 
     newGameTheme, setNewGameTheme,
+    customThemeData, setCustomThemeData,
     isModalOpen,
     handleCreateGame, handleOpenGame, handleDeleteClick,
     handleCloseModal, handleConfirmDelete, getBankDisplayName
@@ -42,8 +44,10 @@ export default function AdminDashboard() {
         </Link>
       </div>
 
-      {/* 2. REMOVED entire message.text block */}
-
+      {/* --- THIS IS THE CHANGE --- */}
+      {/* I've moved the form and the custom theme to be separate. */}
+      {/* The main card just has the form now. */}
+      
       <Card className="mb-8">
         <CardContent className="p-6">
           <CardTitle className="mb-4">{t('admin.dashboard.createGameTitle')}</CardTitle>
@@ -87,7 +91,6 @@ export default function AdminDashboard() {
                 </Select>
               </div>
 
-              {/* --- NEW THEME SELECTOR --- */}
               <div className="flex-1 min-w-[200px]">
                 <Label htmlFor="themeSelect">{t('admin.dashboard.themeSelectLabel')}</Label>
                 <Select
@@ -98,9 +101,9 @@ export default function AdminDashboard() {
                   <option value="default">Default (Primal Mana)</option>
                   <option value="flare">Solar Flare</option>
                   <option value="void">Mana Void</option>
+                  <option value="custom">Custom...</option>
                 </Select>
               </div>
-              {/* --- END NEW THEME SELECTOR --- */}
 
               <Button type="submit" variant="primary">
                 {t('admin.dashboard.createGameButton')}
@@ -110,7 +113,20 @@ export default function AdminDashboard() {
         </CardContent>
       </Card>
 
-      <Card>
+      {/* The CustomThemeForm is NOW RENDERED OUTSIDE the card, 
+        so it can't be clipped.
+      */}
+      {newGameTheme === 'custom' && (
+        <CustomThemeForm 
+          themeData={customThemeData} 
+          onChange={setCustomThemeData} 
+        />
+      )}
+
+      {/* --- END OF CHANGE --- */}
+
+
+      <Card className="mt-8"> {/* Added margin-top */}
         <CardContent className="p-6">
           <CardTitle className="mb-4">{t('admin.dashboard.myGamesTitle')}</CardTitle>
           

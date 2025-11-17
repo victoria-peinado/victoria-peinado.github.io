@@ -1,10 +1,10 @@
 // src/hooks/useAdminDashboard.js
-import { useState, useEffect, useCallback } from 'react'; // 1. Import useCallback
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
-import toast from 'react-hot-toast'; // 2. Import toast
+import toast from 'react-hot-toast';
 
 // UPDATED: Imports from new service locations
 import { getQuestionBanks } from '../services/bank/bankManagement';
@@ -23,31 +23,36 @@ export function useAdminDashboard() {
   const [selectedBankId, setSelectedBankId] = useState('');
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
-  // const [message, setMessage] = useState({ text: '', type: '' }); // 3. REMOVED message state
   const [questionCounts, setQuestionCounts] = useState({});
   const [newGameName, setNewGameName] = useState('');
-  const [newGameTheme, setNewGameTheme] = useState('default');
+  const [newGameTheme, setNewGameTheme] = useState('default'); // <-- THIS IS THE FIX
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [gameToDelete, setGameToDelete] = useState(null);
 
-  // 4. UPDATED handleMessage to use toast
+  // NEW: State to hold the custom theme colors
+  // We use the default "Primal Mana" colors as the starting point.
+  const [customThemeData, setCustomThemeData] = useState({
+    primary: '#619A5A',
+    primaryLight: '#8BC34A',
+    primaryDark: '#38703A',
+    secondary: '#D32F2F',
+    secondaryDark: '#B71C1C',
+  });
+
   const handleMessage = useCallback((text, type) => {
     if (type === 'error') {
       toast.error(text);
     } else {
       toast.success(text);
     }
-  }, []); // Empty dependency array
+  }, []);
 
-  // Fetch question banks and their counts
+  // Fetch question banks (useEffect is unchanged)
   useEffect(() => {
     const fetchBanks = async () => {
       try {
-        // UPDATED: Using new service
         const banks = await getQuestionBanks(currentUser.uid);
         setQuestionBanks(banks);
-
-        // Fetch question counts for each bank
         const counts = {};
         for (const bank of banks) {
           try {
@@ -65,17 +70,15 @@ export function useAdminDashboard() {
         handleMessage('Error loading question banks', 'error');
       }
     };
-
     if (currentUser) {
       fetchBanks();
     }
-  }, [currentUser, handleMessage]); // 5. Added handleMessage
+  }, [currentUser, handleMessage]);
 
-  // Fetch games for admin
+  // Fetch games (useEffect is unchanged)
   useEffect(() => {
     const fetchGames = async () => {
       try {
-        // UPDATED: Using new service
         const querySnapshot = await getGamesForAdmin(currentUser.uid);
         const gamesData = querySnapshot.docs.map(doc => ({
           id: doc.id,
@@ -89,28 +92,23 @@ export function useAdminDashboard() {
         setLoading(false);
       }
     };
-
     if (currentUser) {
       fetchGames();
     }
-  }, [currentUser, handleMessage]); // 6. Added handleMessage
+  }, [currentUser, handleMessage]);
 
-  // All handlers are now here
+  // Delete handlers (unchanged)
   const handleDeleteClick = (gameId) => {
     setGameToDelete(gameId);
     setIsModalOpen(true);
   };
-
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setGameToDelete(null);
   };
-
   const handleConfirmDelete = async () => {
     if (!gameToDelete) return;
-    
     try {
-      // UPDATED: Using new service
       await deleteGame(gameToDelete);
       setGames(games.filter(game => game.id !== gameToDelete));
       handleMessage('Game deleted successfully', 'success');
@@ -122,6 +120,7 @@ export function useAdminDashboard() {
     }
   };
 
+  // UPDATED: handleCreateGame now passes either a string or an object
   const handleCreateGame = async (e) => {
     e.preventDefault();
     if (!newGameName) {
@@ -132,25 +131,29 @@ export function useAdminDashboard() {
       handleMessage('Please select a question bank', 'error');
       return;
     }
-
     const questionCount = questionCounts[selectedBankId] || 0;
     if (questionCount === 0) {
       handleMessage('Selected question bank has no questions! Upload a CSV first.', 'error');
       return;
     }
 
+    // NEW: Determine what to send to Firebase
+    let themeOrData;
+    if (newGameTheme === 'custom') {
+      themeOrData = customThemeData; // Send the object
+    } else {
+      themeOrData = newGameTheme; // Send the string (e.g., "flare")
+    }
+
     try {
-      // UPDATED: Pass the newGameTheme to the service
       const gameId = await createNewGame(
         currentUser.uid, 
         selectedBankId, 
         newGameName, 
-        newGameTheme 
+        themeOrData // Pass the new variable
       );
       handleMessage('Game created successfully!', 'success');
       setNewGameName('');
-      // We don't reset the theme, as the admin might want to create another game
-      // with the same theme.
       navigate(`/admin/game/${gameId}`);
     } catch (error) {
       console.error('Error creating game:', error);
@@ -172,7 +175,6 @@ export function useAdminDashboard() {
   return {
     currentUser,
     loading,
-    // message, // 7. REMOVED message from return
     questionBanks,
     selectedBankId,
     setSelectedBankId,
@@ -182,6 +184,8 @@ export function useAdminDashboard() {
     setNewGameName,
     newGameTheme,
     setNewGameTheme,
+    customThemeData,
+    setCustomThemeData,
     isModalOpen,
     handleCreateGame,
     handleOpenGame,

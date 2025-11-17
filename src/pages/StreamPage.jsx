@@ -1,10 +1,10 @@
 // src/pages/StreamPage.jsx
-import React, { useEffect } from 'react'; // 1. Import useEffect
+import React, { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useGameSession } from '../hooks/useGameSession';
 import { useQuestionBank } from '../hooks/useQuestionBank';
-import { useAudio } from '../hooks/useAudio'; // 2. Import useAudio
+import { useAudio } from '../hooks/useAudio';
 import StreamWaitingView from '../components/stream/StreamWaitingView';
 import StreamQuestionView from '../components/stream/StreamQuestionView';
 import StreamAnswerView from '../components/stream/StreamAnswerView';
@@ -19,30 +19,18 @@ export default function StreamPage() {
   const { t } = useTranslation();
   const { gameSession, loading, error } = useGameSession(gameId);
   const { questions } = useQuestionBank(gameSession?.questionBankId);
-  const { setMusic } = useAudio(); // 3. Get setMusic
+  const { setMusic } = useAudio();
 
-  // 4. NEW: Add state-driven music logic
   useEffect(() => {
     if (!gameSession) return;
-
     switch (gameSession.state) {
-      case 'waiting':
-        setMusic('music_lobby.mp3');
-        break;
-      case 'questionactive':
-        setMusic('music_question.mp3');
-        break;
-      case 'answerrevealed':
-      case 'leaderboard':
-        setMusic('music_lobby.mp3');
-        break;
-      case 'finished':
-        // FinalLeaderboard component handles its own music
-        break;
+      case 'waiting': setMusic('music_lobby.mp3'); break;
+      case 'questionactive': setMusic('music_question.mp3'); break;
+      case 'answerrevealed': case 'leaderboard': setMusic('music_lobby.mp3'); break;
+      case 'finished': break;
       default:
-        // Do nothing for unknown states
     }
-  }, [gameSession?.state, setMusic]); // Re-run when state or setMusic changes
+  }, [gameSession?.state, setMusic]);
 
   if (loading) {
     return <LoadingScreen message={t('loading.game')} />;
@@ -54,8 +42,19 @@ export default function StreamPage() {
     return <ErrorScreen message={t('error.gameNotFound')} />;
   }
 
-  // NEW: Get the theme from the game session [cite: 41]
+  // --- NEW THEME LOGIC ---
   const theme = gameSession.theme || 'default';
+  const customThemeData = gameSession.customThemeData || null;
+
+  // Define the style object to override CSS variables
+  const themeStyles = (theme === 'custom' && customThemeData) ? {
+    '--color-primary': customThemeData.primary,
+    '--color-primary-light': customThemeData.primaryLight,
+    '--color-primary-dark': customThemeData.primaryDark,
+    '--color-secondary': customThemeData.secondary,
+    '--color-secondary-dark': customThemeData.secondaryDark,
+  } : {};
+  // --- END NEW THEME LOGIC ---
 
   const renderGameState = () => {
     switch (gameSession.state) {
@@ -90,12 +89,13 @@ export default function StreamPage() {
   };
 
   return (
-    // UPDATED: Dynamically add the theme class [cite: 45]
-    <div className={`theme-${theme} min-h-screen bg-neutral-900 text-neutral-100 font-body 
-                    flex items-center justify-center p-8 relative`}>
-      
+    // Apply theme and custom styles to the main game page
+    <div 
+      className={`theme-${theme} min-h-screen bg-neutral-900 text-neutral-100 font-body 
+                  flex items-center justify-center p-8 relative`}
+      style={themeStyles}
+    >
       <StreamHeader gamePin={gameSession.gamePin || gameId} />
-
       <div className="w-full max-w-6xl">
         {renderGameState()}
       </div>

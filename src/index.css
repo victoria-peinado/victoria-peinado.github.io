@@ -61,3 +61,29 @@
     min-height: 100vh;
   }
 }
+
+/*
+=================================================================
+  REACT-COLOR TAILWIND FIX (v4 - The Simple One)
+  This block only resets the 'content' property for pseudo-
+  elements, which is the other common conflict. It does NOT
+  touch 'display', which was the source of our bug.
+=================================================================
+*/
+.react-color-override *::before,
+.react-color-override *::after {
+  content: none !important;
+}
+
+/* We also need to make sure Tailwind's base 'input' styles
+  don't break the picker's input fields.
+*/
+.react-color-override input {
+  /* Revert to default browser styling for inputs */
+  appearance: revert !important;
+  padding: revert !important;
+  border-width: revert !important;
+  border-color: revert !important;
+  background-color: revert !important;
+  color: revert !important;
+}
