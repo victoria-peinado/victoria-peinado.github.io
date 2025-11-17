@@ -67,19 +67,24 @@ export default function PlayerPage() {
   if (gameError) return <ErrorScreen message={gameError} />;
   if (!gameSession) return <ErrorScreen message={t('error.gameNotFound')} />;
 
-  // --- NEW THEME LOGIC ---
+  // --- UPDATED THEME LOGIC ---
   const theme = gameSession.theme || 'default';
   const customThemeData = gameSession.customThemeData || null;
 
   // Define the style object to override CSS variables
+  // This now includes ALL theme variables from your picker
   const themeStyles = (theme === 'custom' && customThemeData) ? {
     '--color-primary': customThemeData.primary,
     '--color-primary-light': customThemeData.primaryLight,
     '--color-primary-dark': customThemeData.primaryDark,
     '--color-secondary': customThemeData.secondary,
     '--color-secondary-dark': customThemeData.secondaryDark,
+    '--color-text-on-primary': customThemeData.textOnPrimary, // <-- FIX 
+    '--color-accent-green': customThemeData.accentGreen,     // <-- ADDED
+    '--color-accent-blue': customThemeData.accentBlue,       // <-- ADDED
+    '--color-accent-black': customThemeData.accentBlack,     // <-- ADDED
   } : {};
-  // --- END NEW THEME LOGIC ---
+  // --- END UPDATED THEME LOGIC ---
 
   // --- NOT JOINED YET ---
   if (!playerId) {

@@ -1,24 +1,16 @@
-// src/components/ui/Button.jsx
+// src/components/player/PlayerAnswerButton.jsx
 import React from 'react';
 import { useAudio } from '../../hooks/useAudio'; 
 
 // --- THIS IS THE FIX ---
-// We are reverting 'primary' to its original hard-coded color.
-// The admin dashboard will now use 'bg-accent-blue' again.
-// The 'danger' variant remains themed, as it was in your original code.
+// 1. Remove the broken 'text-on-primary' class from the 'primary' variant.
 const variants = {
-  // "Island" Blue for primary actions
-  primary: 'bg-accent-blue hover:bg-blue-900 text-white',
-  
-  // Uses --color-secondary and --color-text-on-secondary
-  danger: 'bg-secondary hover:bg-secondary-dark text-on-secondary', 
-  
-  // "Swamp" Black for secondary/neutral actions
+  primary: 'bg-primary hover:bg-primary-dark', // Text color will be handled by the style prop
   neutral: 'bg-accent-black hover:bg-neutral-950 text-neutral-100 border border-neutral-700',
 };
 // --- END FIX ---
 
-export function Button({ 
+export function PlayerAnswerButton({ 
   children, 
   onClick, 
   type = 'button', 
@@ -28,7 +20,10 @@ export function Button({
 }) {
   const { playSound } = useAudio(); 
 
+  // --- THIS IS THE FIX ---
+  // Removed the extra '.' before the '=>'
   const handleClick = (e) => {
+  // --- END FIX ---
     if (disabled) {
       return;
     }
@@ -40,12 +35,18 @@ export function Button({
     }
   };
 
+  // 2. Conditionally apply the text color using an inline style.
+  // This will read the '--color-text-on-primary' variable set by PlayerPage.jsx
+  const buttonStyle = variant === 'primary' 
+    ? { color: 'var(--color-text-on-primary)' } 
+    : {};
+
   return (
     <button
       type={type}
       onClick={handleClick}
       disabled={disabled}
-      // Base styles + dynamic variant styles + new disabled styles
+      style={buttonStyle} // 3. Apply the style here
       className={`
         w-full px-6 py-3 
         font-display font-bold text-lg 

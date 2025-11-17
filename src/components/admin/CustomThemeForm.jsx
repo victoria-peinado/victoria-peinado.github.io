@@ -1,6 +1,5 @@
 // src/components/admin/CustomThemeForm.jsx
 import React, { useState, useCallback } from 'react';
-// 1. Switched back to SketchPicker, it's safer.
 import { SketchPicker } from 'react-color';
 import { useTranslation } from 'react-i18next';
 import { Label } from '../ui/Label';
@@ -40,7 +39,6 @@ function ColorPickerInput({ label, color, onChange }) {
             onClick={handleClose}
             aria-hidden="true"
           />
-          {/* 2. Make sure this wrapper div is here */}
           <div className="react-color-override">
             <SketchPicker 
               color={color} 
@@ -54,7 +52,7 @@ function ColorPickerInput({ label, color, onChange }) {
   );
 }
 
-// The main form component (unchanged)
+// The main form component
 export function CustomThemeForm({ themeData, onChange }) {
   const { t } = useTranslation();
 
@@ -70,7 +68,8 @@ export function CustomThemeForm({ themeData, onChange }) {
       <h4 className="text-lg font-bold font-display mb-4">
         {t('admin.dashboard.customThemeTitle', 'Custom Theme')}
       </h4>
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+      {/* UPDATED: Grid now shows all 10 colors */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
         <ColorPickerInput
           label="Primary"
           color={themeData.primary}
@@ -95,6 +94,26 @@ export function CustomThemeForm({ themeData, onChange }) {
           label="Secondary Dark"
           color={themeData.secondaryDark}
           onChange={(value) => handleColorChange('secondaryDark', value)}
+        />
+        <ColorPickerInput
+          label="Text on Primary"
+          color={themeData.textOnPrimary}
+          onChange={(value) => handleColorChange('textOnPrimary', value)}
+        />
+        <ColorPickerInput
+          label="Accent Green"
+          color={themeData.accentGreen}
+          onChange={(value) => handleColorChange('accentGreen', value)}
+        />
+        <ColorPickerInput
+          label="Accent Blue"
+          color={themeData.accentBlue}
+          onChange={(value) => handleColorChange('accentBlue', value)}
+        />
+        <ColorPickerInput
+          label="Accent Black"
+          color={themeData.accentBlack}
+          onChange={(value) => handleColorChange('accentBlack', value)}
         />
       </div>
     </div>

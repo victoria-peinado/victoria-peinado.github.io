@@ -12,6 +12,9 @@ import { Label } from '../components/ui/Label';
 import { Select } from '../components/ui/Select';
 import { CustomThemeForm } from '../components/admin/CustomThemeForm';
 
+import { SavePresetModal } from '../components/admin/SavePresetModal';
+import { ThemeVisualizer } from '../components/admin/ThemeVisualizer';
+
 export default function AdminDashboard() {
   const { t } = useTranslation();
   const {
@@ -23,7 +26,16 @@ export default function AdminDashboard() {
     customThemeData, setCustomThemeData,
     isModalOpen,
     handleCreateGame, handleOpenGame, handleDeleteClick,
-    handleCloseModal, handleConfirmDelete, getBankDisplayName
+    handleCloseModal, handleConfirmDelete, getBankDisplayName,
+    themePresets,
+    isSaveModalOpen,
+    setIsSaveModalOpen,
+    handleSavePreset,
+    currentThemeData,
+
+    // --- NEW: Get Checkbox State ---
+    showPreview,
+    setShowPreview,
   } = useAdminDashboard();
 
   return (
@@ -43,10 +55,6 @@ export default function AdminDashboard() {
           </Button>
         </Link>
       </div>
-
-      {/* --- THIS IS THE CHANGE --- */}
-      {/* I've moved the form and the custom theme to be separate. */}
-      {/* The main card just has the form now. */}
       
       <Card className="mb-8">
         <CardContent className="p-6">
@@ -91,6 +99,7 @@ export default function AdminDashboard() {
                 </Select>
               </div>
 
+              {/* Updated Theme Select (unchanged from last step) */}
               <div className="flex-1 min-w-[200px]">
                 <Label htmlFor="themeSelect">{t('admin.dashboard.themeSelectLabel')}</Label>
                 <Select
@@ -98,9 +107,22 @@ export default function AdminDashboard() {
                   value={newGameTheme}
                   onChange={(e) => setNewGameTheme(e.target.value)}
                 >
-                  <option value="default">Default (Primal Mana)</option>
-                  <option value="flare">Solar Flare</option>
-                  <option value="void">Mana Void</option>
+                  <optgroup label="Base Themes">
+                    <option value="default">Default (Primal Mana)</option>
+                    <option value="flare">Solar Flare</option>
+                    <option value="void">Mana Void</option>
+                  </optgroup>
+                  
+                  {themePresets.length > 0 && (
+                    <optgroup label="My Presets">
+                      {themePresets.map(preset => (
+                        <option key={preset.id} value={preset.id}>
+                          {preset.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                  )}
+
                   <option value="custom">Custom...</option>
                 </Select>
               </div>
@@ -108,25 +130,58 @@ export default function AdminDashboard() {
               <Button type="submit" variant="primary">
                 {t('admin.dashboard.createGameButton')}
               </Button>
+
+              {newGameTheme === 'custom' && (
+                <Button 
+                  type="button" 
+                  variant="neutral"
+                  onClick={() => setIsSaveModalOpen(true)}
+                >
+                  Save as Preset...
+                </Button>
+              )}
             </form>
           )}
         </CardContent>
       </Card>
 
-      {/* The CustomThemeForm is NOW RENDERED OUTSIDE the card, 
-        so it can't be clipped.
-      */}
-      {newGameTheme === 'custom' && (
-        <CustomThemeForm 
-          themeData={customThemeData} 
-          onChange={setCustomThemeData} 
-        />
-      )}
+      {/* --- UPDATED: Two-Column Layout for Custom Theme & Visualizer --- */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+        <div>
+          {/* This column wrapper only shows if 'custom' is selected */}
+          {newGameTheme === 'custom' && (
+            <>
+              <CustomThemeForm 
+                themeData={customThemeData} 
+                onChange={setCustomThemeData} 
+              />
+              {/* --- NEW: Show Preview Checkbox --- */}
+              <div className="flex items-center gap-3 mt-4 p-4 bg-neutral-800 rounded-lg border-2 border-neutral-700">
+                <input
+                  type="checkbox"
+                  id="showPreview"
+                  checked={showPreview}
+                  onChange={(e) => setShowPreview(e.target.checked)}
+                  className="h-5 w-5 rounded bg-accent-black border-neutral-700 text-primary focus:ring-primary focus:ring-offset-neutral-800"
+                />
+                <Label htmlFor="showPreview" className="mb-0 !text-neutral-100 font-normal">
+                  Show Live Preview
+                </Label>
+              </div>
+            </>
+          )}
+        </div>
+        <div>
+          {/* --- NEW: Visualizer is now conditional on 'custom' theme AND checkbox --- */}
+          {newGameTheme === 'custom' && showPreview && (
+            <ThemeVisualizer themeData={currentThemeData} />
+          )}
+        </div>
+      </div>
+      {/* --- END UPDATED LAYOUT --- */}
 
-      {/* --- END OF CHANGE --- */}
 
-
-      <Card className="mt-8"> {/* Added margin-top */}
+      <Card>
         <CardContent className="p-6">
           <CardTitle className="mb-4">{t('admin.dashboard.myGamesTitle')}</CardTitle>
           
@@ -179,7 +234,7 @@ export default function AdminDashboard() {
             </div>
           )}
         </CardContent>
-      </Card>
+      </Card> 
 
       <ConfirmModal
         isOpen={isModalOpen}
@@ -189,6 +244,12 @@ export default function AdminDashboard() {
         message={t('admin.dashboard.modal.message')}
         confirmText={t('admin.dashboard.modal.confirmText')}
         confirmVariant="danger"
+      />
+
+      <SavePresetModal
+        isOpen={isSaveModalOpen}
+        onClose={() => setIsSaveModalOpen(false)}
+        onSave={handleSavePreset}
       />
     </div>
   );

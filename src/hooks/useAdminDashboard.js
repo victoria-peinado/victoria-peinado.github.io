@@ -6,38 +6,71 @@ import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
 import toast from 'react-hot-toast';
 
-// UPDATED: Imports from new service locations
 import { getQuestionBanks } from '../services/bank/bankManagement';
 import { 
   getGamesForAdmin, 
   deleteGame, 
   createNewGame 
 } from '../services/game/gameManagement';
+import { getThemePresets, saveThemePreset } from '../services/admin/themeService';
+
+// --- Theme constants for the visualizer ---
+const DEFAULT_THEME_DATA = {
+  primary: '#619A5A',
+  primaryLight: '#8BC34A',
+  primaryDark: '#38703A',
+  secondary: '#D32F2F',
+  secondaryDark: '#B71C1C',
+  accentBlue: '#0D47A1',
+  accentGreen: '#22c55e',
+  accentBlack: '#212121',
+  textOnPrimary: '#ffffff',
+};
+
+const FLARE_THEME_DATA = {
+  primary: '#FF9800',
+  primaryLight: '#FFB74D',
+  primaryDark: '#F57C00',
+  secondary: '#FFEB3B',
+  secondaryDark: '#FBC02D',
+  accentBlue: '#0D47A1',
+  accentGreen: '#22c55e',
+  accentBlack: '#212121',
+  textOnPrimary: '#000000',
+};
+
+const VOID_THEME_DATA = {
+  primary: '#673AB7',
+  primaryLight: '#9575CD',
+  primaryDark: '#512DA8',
+  secondary: '#00BCD4',
+  secondaryDark: '#0097A7',
+  accentBlue: '#0D47A1',
+  accentGreen: '#22c55e',
+  accentBlack: '#212121',
+  textOnPrimary: '#ffffff',
+};
+// --- End Theme Constants ---
 
 export function useAdminDashboard() {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
   
-  // All state is now managed here
   const [questionBanks, setQuestionBanks] = useState([]);
   const [selectedBankId, setSelectedBankId] = useState('');
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
   const [questionCounts, setQuestionCounts] = useState({});
   const [newGameName, setNewGameName] = useState('');
-  const [newGameTheme, setNewGameTheme] = useState('default'); // <-- THIS IS THE FIX
+  const [newGameTheme, setNewGameTheme] = useState('default');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [gameToDelete, setGameToDelete] = useState(null);
-
-  // NEW: State to hold the custom theme colors
-  // We use the default "Primal Mana" colors as the starting point.
-  const [customThemeData, setCustomThemeData] = useState({
-    primary: '#619A5A',
-    primaryLight: '#8BC34A',
-    primaryDark: '#38703A',
-    secondary: '#D32F2F',
-    secondaryDark: '#B71C1C',
-  });
+  const [customThemeData, setCustomThemeData] = useState(DEFAULT_THEME_DATA);
+  const [themePresets, setThemePresets] = useState([]);
+  const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
+  const [currentThemeData, setCurrentThemeData] = useState(DEFAULT_THEME_DATA);
+  
+  const [showPreview, setShowPreview] = useState(false);
 
   const handleMessage = useCallback((text, type) => {
     if (type === 'error') {
@@ -47,7 +80,7 @@ export function useAdminDashboard() {
     }
   }, []);
 
-  // Fetch question banks (useEffect is unchanged)
+  // Fetch question banks (unchanged)
   useEffect(() => {
     const fetchBanks = async () => {
       try {
@@ -75,7 +108,7 @@ export function useAdminDashboard() {
     }
   }, [currentUser, handleMessage]);
 
-  // Fetch games (useEffect is unchanged)
+  // Fetch games (unchanged)
   useEffect(() => {
     const fetchGames = async () => {
       try {
@@ -96,6 +129,57 @@ export function useAdminDashboard() {
       fetchGames();
     }
   }, [currentUser, handleMessage]);
+
+  // Fetch Theme Presets (unchanged)
+  const fetchPresets = useCallback(async () => {
+    if (!currentUser) return;
+    try {
+      const presets = await getThemePresets(currentUser.uid);
+      setThemePresets(presets);
+    } catch (error) {
+      handleMessage('Could not load theme presets', 'error');
+    }
+  }, [currentUser, handleMessage]);
+
+  useEffect(() => {
+    fetchPresets();
+  }, [fetchPresets]);
+
+  // Effect to update the Live Visualizer (unchanged)
+  useEffect(() => {
+    switch (newGameTheme) {
+      case 'default':
+        setCurrentThemeData(DEFAULT_THEME_DATA);
+        break;
+      case 'flare':
+        setCurrentThemeData(FLARE_THEME_DATA);
+        break;
+      case 'void':
+        setCurrentThemeData(VOID_THEME_DATA);
+        break;
+      case 'custom':
+        setCurrentThemeData(customThemeData);
+        break;
+      default:
+        const preset = themePresets.find(p => p.id === newGameTheme);
+        if (preset) {
+          // Ensure loaded preset has new values, or use default
+          setCurrentThemeData({
+            ...DEFAULT_THEME_DATA,
+            ...preset.themeData
+          });
+        } else {
+          setCurrentThemeData(DEFAULT_THEME_DATA);
+        }
+    }
+  }, [newGameTheme, customThemeData, themePresets]);
+
+  // Reset preview toggle if not in custom mode (unchanged)
+  useEffect(() => {
+    if (newGameTheme !== 'custom') {
+      setShowPreview(false);
+    }
+  }, [newGameTheme]);
 
   // Delete handlers (unchanged)
   const handleDeleteClick = (gameId) => {
@@ -120,7 +204,7 @@ export function useAdminDashboard() {
     }
   };
 
-  // UPDATED: handleCreateGame now passes either a string or an object
+  // handleCreateGame (unchanged)
   const handleCreateGame = async (e) => {
     e.preventDefault();
     if (!newGameName) {
@@ -137,12 +221,19 @@ export function useAdminDashboard() {
       return;
     }
 
-    // NEW: Determine what to send to Firebase
     let themeOrData;
     if (newGameTheme === 'custom') {
-      themeOrData = customThemeData; // Send the object
+      themeOrData = customThemeData;
+    } else if (['default', 'flare', 'void'].includes(newGameTheme)) {
+      themeOrData = newGameTheme;
     } else {
-      themeOrData = newGameTheme; // Send the string (e.g., "flare")
+      const preset = themePresets.find(p => p.id === newGameTheme);
+      if (preset) {
+        themeOrData = preset.themeData;
+      } else {
+        handleMessage('Selected preset not found. Defaulting theme.', 'error');
+        themeOrData = 'default';
+      }
     }
 
     try {
@@ -150,13 +241,25 @@ export function useAdminDashboard() {
         currentUser.uid, 
         selectedBankId, 
         newGameName, 
-        themeOrData // Pass the new variable
+        themeOrData
       );
       handleMessage('Game created successfully!', 'success');
       setNewGameName('');
       navigate(`/admin/game/${gameId}`);
-    } catch (error) {
+    } catch (error) { // <-- THIS IS THE FIX. Added '{'
       console.error('Error creating game:', error);
+      handleMessage(error.message, 'error');
+    }
+  };
+
+  // Handle Save Preset (unchanged)
+  const handleSavePreset = async (presetName) => {
+    try {
+      await saveThemePreset(currentUser.uid, presetName, customThemeData);
+      handleMessage('Theme preset saved!', 'success');
+      fetchPresets();
+      setIsSaveModalOpen(false);
+    } catch (error) {
       handleMessage(error.message, 'error');
     }
   };
@@ -171,7 +274,6 @@ export function useAdminDashboard() {
     return `${name} (${count} questions)`;
   };
 
-  // Return everything the UI needs
   return {
     currentUser,
     loading,
@@ -192,6 +294,13 @@ export function useAdminDashboard() {
     handleDeleteClick,
     handleCloseModal,
     handleConfirmDelete,
-    getBankDisplayName
+    getBankDisplayName,
+    themePresets,
+    isSaveModalOpen,
+    setIsSaveModalOpen,
+    handleSavePreset,
+    currentThemeData,
+    showPreview,
+    setShowPreview,
   };
 }

@@ -1,6 +1,7 @@
 +---public
 |   |   CNAME
 |   |   icon.jpg
+|   |   social-preview.jpg
 |   |
 |   +---.qodo
 |   |   +---agents
@@ -45,6 +46,7 @@
     |   |       AdminControls.jsx
     |   |       BroadcastCard.jsx
     |   |       CsvUploader.jsx
+    |   |       CustomThemeForm.jsx
     |   |       GameStatus.jsx
     |   |       LivePlayerList.jsx
     |   |       PlayerRow.jsx

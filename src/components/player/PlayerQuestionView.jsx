@@ -1,8 +1,11 @@
 // src/components/player/PlayerQuestionView.jsx
 import React from 'react';
-import { useTranslation } from 'react-i18next'; // 1. Import
+import { useTranslation } from 'react-i18next';
 import Timer from '../common/Timer';
-import { Button } from '../ui/Button'; // 2. Import our new Button
+// --- THIS IS THE FIX ---
+// 1. Import our new THEMED button instead of the generic one
+import { PlayerAnswerButton } from './PlayerAnswerButton'; 
+// --- END FIX ---
 
 function PlayerQuestionView({
   gameSession,
@@ -12,7 +15,7 @@ function PlayerQuestionView({
   isSubmitting,
   selectedAnswer,
 }) {
-  const { t } = useTranslation(); // 3. Initialize
+  const { t } = useTranslation(); 
   const currentQuestion = questions[gameSession.currentQuestionIndex];
   const [timeExpired, setTimeExpired] = React.useState(false);
 
@@ -75,8 +78,9 @@ function PlayerQuestionView({
           const isDisabled = hasAnswered || isSubmitting || timeExpired;
 
           return (
-            // 4. Use our new Button component
-            <Button
+            // --- THIS IS THE FIX ---
+            // 2. Use our new PlayerAnswerButton component
+            <PlayerAnswerButton
               key={answer.letter}
               onClick={() => handleAnswerClick(answer)}
               disabled={isDisabled}
@@ -87,7 +91,8 @@ function PlayerQuestionView({
             >
               <span className="text-2xl font-bold mr-3">{answer.letter}.</span>
               {answer.text}
-            </Button>
+            </PlayerAnswerButton>
+            // --- END FIX ---
           );
         })}
       </div>

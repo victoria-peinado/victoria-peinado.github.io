@@ -17,6 +17,10 @@
     --color-accent-blue: #0D47A1;
     --color-accent-white: #F5F5DC;
     --color-accent-black: #212121;
+    
+    /* --- NEW --- */
+    --color-text-on-primary: #FFFFFF;
+    /* textOnSecondary removed */
   }
 
   /* "Solar Flare" Theme (Orange/Yellow) */
@@ -29,6 +33,10 @@
     --color-accent-blue: #0D47A1;
     --color-accent-white: #F5F5DC;
     --color-accent-black: #212121;
+
+    /* --- NEW --- */
+    --color-text-on-primary: #000000;
+    /* textOnSecondary removed */
   }
 
   /* "Mana Void" Theme (Purple/Cyan) */
@@ -40,7 +48,11 @@
     --color-secondary-dark: #0097A7;
     --color-accent-blue: #0D47A1;
     --color-accent-white: #F5F5DC;
-    --color-accent-black: #21212Such;
+    --color-accent-black: #212121;
+
+    /* --- NEW --- */
+    --color-text-on-primary: #FFFFFF;
+    /* textOnSecondary removed */
   }
   
   /* We add a "default" class for consistency in the logic later */
@@ -65,9 +77,6 @@
 /*
 =================================================================
   REACT-COLOR TAILWIND FIX (v4 - The Simple One)
-  This block only resets the 'content' property for pseudo-
-  elements, which is the other common conflict. It does NOT
-  touch 'display', which was the source of our bug.
 =================================================================
 */
 .react-color-override *::before,
@@ -75,9 +84,6 @@
   content: none !important;
 }
 
-/* We also need to make sure Tailwind's base 'input' styles
-  don't break the picker's input fields.
-*/
 .react-color-override input {
   /* Revert to default browser styling for inputs */
   appearance: revert !important;
