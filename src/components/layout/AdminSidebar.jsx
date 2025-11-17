@@ -14,7 +14,7 @@ export default function AdminSidebar() {
       await logout();
       navigate('/login');
     } catch (error) {
-      console.error("Failed to log out", error);
+      console.error('Failed to log out', error);
     }
   };
 
@@ -31,7 +31,6 @@ export default function AdminSidebar() {
   return (
     <div className="w-64 bg-neutral-800 h-screen p-4 flex flex-col 
                     border-r border-neutral-700">
-      
       {/* Logo/Title */}
       <h1 className="font-display text-2xl font-bold text-primary mb-6 px-2">
         Magic Trivia
@@ -41,6 +40,8 @@ export default function AdminSidebar() {
       <nav className="flex-grow">
         <NavLink to="/admin">Dashboard</NavLink>
         <NavLink to="/admin/question-banks">Question Banks</NavLink>
+        {/* --- NEW: Added Profile Link --- */}
+        <NavLink to="/profile">My Profile</NavLink>
         <NavLink to="/">View Site</NavLink>
       </nav>
 
@@ -51,9 +52,9 @@ export default function AdminSidebar() {
             {currentUser.email}
           </span>
         )}
-        <Button 
-          variant="danger" 
-          onClick={handleLogout} 
+        <Button
+          variant="danger"
+          onClick={handleLogout}
           className="text-base py-2" // Smaller text
         >
           Log Out

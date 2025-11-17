@@ -7,12 +7,17 @@ import { db } from '../firebase';
 import toast from 'react-hot-toast';
 
 import { getQuestionBanks } from '../services/bank/bankManagement';
-import { 
-  getGamesForAdmin, 
-  deleteGame, 
-  createNewGame 
+import {
+  getGamesForAdmin,
+  deleteGame,
+  createNewGame,
 } from '../services/game/gameManagement';
-import { getThemePresets, saveThemePreset } from '../services/admin/themeService';
+import {
+  getThemePresets,
+  saveThemePreset,
+  deleteThemePreset, // <-- SPRINT 14: Import
+  updateThemePreset, // <-- SPRINT 14: Import
+} from '../services/admin/themeService';
 
 // --- Theme constants for the visualizer ---
 const DEFAULT_THEME_DATA = {
@@ -55,7 +60,7 @@ const VOID_THEME_DATA = {
 export function useAdminDashboard() {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
-  
+
   const [questionBanks, setQuestionBanks] = useState([]);
   const [selectedBankId, setSelectedBankId] = useState('');
   const [games, setGames] = useState([]);
@@ -69,8 +74,14 @@ export function useAdminDashboard() {
   const [themePresets, setThemePresets] = useState([]);
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
   const [currentThemeData, setCurrentThemeData] = useState(DEFAULT_THEME_DATA);
-  
+
   const [showPreview, setShowPreview] = useState(false);
+
+  // --- SPRINT 14: New state for preset editing/deleting ---
+  const [editingPreset, setEditingPreset] = useState(null); // { id, name, themeData }
+  const [isDeletePresetModalOpen, setIsDeletePresetModalOpen] = useState(false);
+  const [presetToDelete, setPresetToDelete] = useState(null); // { id, name }
+  // ---
 
   const handleMessage = useCallback((text, type) => {
     if (type === 'error') {
@@ -89,11 +100,17 @@ export function useAdminDashboard() {
         const counts = {};
         for (const bank of banks) {
           try {
-            const questionsRef = collection(db, `questionBanks/${bank.id}/questions`);
+            const questionsRef = collection(
+              db,
+              `questionBanks/${bank.id}/questions`
+            );
             const snapshot = await getDocs(questionsRef);
             counts[bank.id] = snapshot.size;
           } catch (error) {
-            console.error(`Error fetching questions for bank ${bank.id}:`, error);
+            console.error(
+              `Error fetching questions for bank ${bank.id}:`,
+              error
+            );
             counts[bank.id] = 0;
           }
         }
@@ -113,9 +130,9 @@ export function useAdminDashboard() {
     const fetchGames = async () => {
       try {
         const querySnapshot = await getGamesForAdmin(currentUser.uid);
-        const gamesData = querySnapshot.docs.map(doc => ({
+        const gamesData = querySnapshot.docs.map((doc) => ({
           id: doc.id,
-          ...doc.data()
+          ...doc.data(),
         }));
         setGames(gamesData);
       } catch (error) {
@@ -158,15 +175,18 @@ export function useAdminDashboard() {
         setCurrentThemeData(VOID_THEME_DATA);
         break;
       case 'custom':
+        // If we're in "custom" mode, the visualizer should
+        // show the data from the color pickers
         setCurrentThemeData(customThemeData);
         break;
       default:
-        const preset = themePresets.find(p => p.id === newGameTheme);
+        // This means a preset is selected from the dropdown
+        const preset = themePresets.find((p) => p.id === newGameTheme);
         if (preset) {
           // Ensure loaded preset has new values, or use default
           setCurrentThemeData({
             ...DEFAULT_THEME_DATA,
-            ...preset.themeData
+            ...preset.themeData,
           });
         } else {
           setCurrentThemeData(DEFAULT_THEME_DATA);
@@ -178,8 +198,13 @@ export function useAdminDashboard() {
   useEffect(() => {
     if (newGameTheme !== 'custom') {
       setShowPreview(false);
+      // SPRINT 14: Also cancel editing if we switch away
+      if (editingPreset) {
+        setEditingPreset(null);
+        setCustomThemeData(DEFAULT_THEME_DATA); // Reset form
+      }
     }
-  }, [newGameTheme]);
+  }, [newGameTheme, editingPreset]);
 
   // Delete handlers (unchanged)
   const handleDeleteClick = (gameId) => {
@@ -194,7 +219,7 @@ export function useAdminDashboard() {
     if (!gameToDelete) return;
     try {
       await deleteGame(gameToDelete);
-      setGames(games.filter(game => game.id !== gameToDelete));
+      setGames(games.filter((game) => game.id !== gameToDelete));
       handleMessage('Game deleted successfully', 'success');
       handleCloseModal();
     } catch (error) {
@@ -217,7 +242,10 @@ export function useAdminDashboard() {
     }
     const questionCount = questionCounts[selectedBankId] || 0;
     if (questionCount === 0) {
-      handleMessage('Selected question bank has no questions! Upload a CSV first.', 'error');
+      handleMessage(
+        'Selected question bank has no questions! Upload a CSV first.',
+        'error'
+      );
       return;
     }
 
@@ -227,7 +255,7 @@ export function useAdminDashboard() {
     } else if (['default', 'flare', 'void'].includes(newGameTheme)) {
       themeOrData = newGameTheme;
     } else {
-      const preset = themePresets.find(p => p.id === newGameTheme);
+      const preset = themePresets.find((p) => p.id === newGameTheme);
       if (preset) {
         themeOrData = preset.themeData;
       } else {
@@ -238,15 +266,16 @@ export function useAdminDashboard() {
 
     try {
       const gameId = await createNewGame(
-        currentUser.uid, 
-        selectedBankId, 
-        newGameName, 
+        currentUser.uid,
+        selectedBankId,
+        newGameName,
         themeOrData
       );
       handleMessage('Game created successfully!', 'success');
       setNewGameName('');
       navigate(`/admin/game/${gameId}`);
-    } catch (error) { // <-- THIS IS THE FIX. Added '{'
+    } catch (error) {
+      // <-- THIS IS THE FIX. Added '{'
       console.error('Error creating game:', error);
       handleMessage(error.message, 'error');
     }
@@ -257,12 +286,92 @@ export function useAdminDashboard() {
     try {
       await saveThemePreset(currentUser.uid, presetName, customThemeData);
       handleMessage('Theme preset saved!', 'success');
-      fetchPresets();
+      fetchPresets(); // Re-fetch to update dropdown
       setIsSaveModalOpen(false);
     } catch (error) {
       handleMessage(error.message, 'error');
     }
   };
+
+  // --- SPRINT 14: New Handlers for Preset CRUD ---
+
+  /**
+   * Triggers the delete confirmation modal for a theme preset.
+   */
+  const handleDeletePresetClick = (preset) => {
+    setPresetToDelete(preset);
+    setIsDeletePresetModalOpen(true);
+  };
+
+  /**
+   * Closes the preset delete modal.
+   */
+  const handleCloseDeletePresetModal = () => {
+    setIsDeletePresetModalOpen(false);
+    setPresetToDelete(null);
+  };
+
+  /**
+   * Deletes the preset, re-fetches, and closes the modal.
+   */
+  const handleConfirmDeletePreset = async () => {
+    if (!presetToDelete) return;
+    try {
+      await deleteThemePreset(currentUser.uid, presetToDelete.id);
+      handleMessage(`Preset "${presetToDelete.name}" deleted.`, 'success');
+      fetchPresets(); // Re-fetch presets
+      handleCloseDeletePresetModal();
+    } catch (error) {
+      handleMessage(error.message, 'error');
+    }
+  };
+
+  /**
+   * Loads a preset's data into the "Custom" form for editing.
+   */
+  const handleSelectPresetForEdit = (preset) => {
+    setEditingPreset(preset);
+    setNewGameTheme('custom'); // Switch dropdown to "Custom"
+    // Load preset's colors into the color pickers
+    setCustomThemeData({ ...DEFAULT_THEME_DATA, ...preset.themeData });
+    setShowPreview(true); // Automatically show preview
+    toast.success(`Editing "${preset.name}".`);
+  };
+
+  /**
+   * Saves the changes to the currently editing preset.
+   */
+  const handleUpdatePreset = async () => {
+    if (!editingPreset) return;
+    try {
+      // We need a name. For now, we'll just re-use the old one.
+      // A full "edit name" flow would be in SavePresetModal.
+      await updateThemePreset(
+        currentUser.uid,
+        editingPreset.id,
+        editingPreset.name, // Re-using old name
+        customThemeData // Using current form data
+      );
+      handleMessage(`Preset "${editingPreset.name}" updated!`, 'success');
+      fetchPresets();
+      // Exit editing mode
+      handleCancelEdit();
+    } catch (error) {
+      handleMessage(error.message, 'error');
+    }
+  };
+
+  /**
+   * Exits editing mode and resets the form.
+   */
+  const handleCancelEdit = () => {
+    setEditingPreset(null);
+    setNewGameTheme('default'); // Reset dropdown
+    setCustomThemeData(DEFAULT_THEME_DATA); // Reset form
+    setShowPreview(false);
+  };
+
+  // --- End SPRINT 14 Handlers ---
 
   const handleOpenGame = (gameId) => {
     navigate(`/admin/game/${gameId}`);
@@ -302,5 +411,15 @@ export function useAdminDashboard() {
     currentThemeData,
     showPreview,
     setShowPreview,
+    // --- SPRINT 14: Export new state and handlers ---
+    editingPreset,
+    isDeletePresetModalOpen,
+    presetToDelete,
+    handleDeletePresetClick,
+    handleCloseDeletePresetModal,
+    handleConfirmDeletePreset,
+    handleSelectPresetForEdit,
+    handleUpdatePreset,
+    handleCancelEdit,
   };
 }

@@ -12,6 +12,7 @@
 |   |       fanfare.wav
 |   |       incorrect.wav
 |   |       music_ambient.mp3
+|   |       music_ambientOLD.mp3
 |   |       music_lobby.mp3
 |   |       music_question.mp3
 |   |       question_reveal.wav
@@ -50,7 +51,9 @@
     |   |       GameStatus.jsx
     |   |       LivePlayerList.jsx
     |   |       PlayerRow.jsx
+    |   |       SavePresetModal.jsx
     |   |       ShareGameCard.jsx
+    |   |       ThemeVisualizer.jsx
     |   |
     |   +---common
     |   |       AdminMessageOverlay.jsx
@@ -76,6 +79,7 @@
     |   |       ProtectedRoute.jsx
     |   |
     |   +---player
+    |   |       PlayerAnswerButton.jsx
     |   |       PlayerAnswerView.jsx
     |   |       PlayerJoinForm.jsx
     |   |       PlayerQuestionView.jsx
@@ -132,6 +136,9 @@
     +---services
     |   |   authService.js
     |   |   scoringService.js
+    |   |
+    |   +---admin
+    |   |       themeService.js
     |   |
     |   +---bank
     |   |       bankManagement.js

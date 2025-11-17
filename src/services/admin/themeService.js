@@ -1,4 +1,5 @@
-import { db } from "../../firebase";
+// src/services/admin/themeService.js
+import { db } from '../../firebase';
 import {
   collection,
   doc,
@@ -7,7 +8,8 @@ import {
   deleteDoc,
   query,
   orderBy,
-} from "firebase/firestore";
+  updateDoc, // <-- NEW: Added updateDoc import
+} from '../../firebase'; // <-- UPDATED: Import from firebase.js
 
 /**
  * Fetches all theme presets for a specific admin user, ordered by name.
@@ -20,11 +22,11 @@ export const getThemePresets = async (adminId) => {
   try {
     const presetsCollectionRef = collection(
       db,
-      "users",
+      'users',
       adminId,
-      "themePresets"
+      'themePresets'
     );
-    const q = query(presetsCollectionRef, orderBy("name")); // Order by name for a clean list
+    const q = query(presetsCollectionRef, orderBy('name')); // Order by name for a clean list
     const querySnapshot = await getDocs(q);
 
     const presets = querySnapshot.docs.map((doc) => ({
@@ -34,8 +36,8 @@ export const getThemePresets = async (adminId) => {
 
     return presets;
   } catch (error) {
-    console.error("Error fetching theme presets:", error);
-    throw new Error("Could not fetch theme presets.");
+    console.error('Error fetching theme presets:', error);
+    throw new Error('Could not fetch theme presets.');
   }
 };
 
@@ -48,15 +50,15 @@ export const getThemePresets = async (adminId) => {
  */
 export const saveThemePreset = async (adminId, presetName, themeData) => {
   if (!adminId || !presetName || !themeData) {
-    throw new Error("Invalid data for saving preset.");
+    throw new Error('Invalid data for saving preset.');
   }
 
   try {
     const presetsCollectionRef = collection(
       db,
-      "users",
+      'users',
       adminId,
-      "themePresets"
+      'themePresets'
     );
     const newPresetDoc = await addDoc(presetsCollectionRef, {
       name: presetName,
@@ -64,10 +66,49 @@ export const saveThemePreset = async (adminId, presetName, themeData) => {
     });
     return { id: newPresetDoc.id, name: presetName, themeData };
   } catch (error) {
-    console.error("Error saving theme preset:", error);
-    throw new Error("Could not save theme preset.");
+    console.error('Error saving theme preset:', error);
+    throw new Error('Could not save theme preset.');
   }
 };
+
+/**
+ * --- NEW: SPRINT 14 ---
+ * Updates an existing theme preset in the admin's collection.
+ * @param {string} adminId - The UID of the admin user.
+ * @param {string} presetId - The document ID of the preset to update.
+ * @param {string} presetName - The new name for the preset.
+ * @param {Object} themeData - The new object of custom color values.
+ */
+export const updateThemePreset = async (
+  adminId,
+  presetId,
+  presetName,
+  themeData
+) => {
+  if (!adminId || !presetId || !presetName || !themeData) {
+    throw new Error('Invalid data for updating preset.');
+  }
+
+  try {
+    const presetDocRef = doc(
+      db,
+      'users',
+      adminId,
+      'themePresets',
+      presetId
+    );
+    await updateDoc(presetDocRef, {
+      name: presetName,
+      themeData: themeData,
+    });
+  } catch (error) {
+    console.error('Error updating theme preset:', error);
+    throw new Error('Could not update theme preset.');
+  }
+};
+/**
+ * --- END NEW ---
+ */
 
 /**
  * Deletes a theme preset from the admin's collection.
@@ -76,20 +117,20 @@ export const saveThemePreset = async (adminId, presetName, themeData) => {
  */
 export const deleteThemePreset = async (adminId, presetId) => {
   if (!adminId || !presetId) {
-    throw new Error("Invalid IDs for deleting preset.");
+    throw new Error('Invalid IDs for deleting preset.');
   }
 
   try {
     const presetDocRef = doc(
       db,
-      "users",
+      'users',
       adminId,
-      "themePresets",
+      'themePresets',
       presetId
     );
     await deleteDoc(presetDocRef);
   } catch (error) {
-    console.error("Error deleting theme preset:", error);
-    throw new Error("Could not delete theme preset.");
+    console.error('Error deleting theme preset:', error);
+    throw new Error('Could not delete theme preset.');
   }
 };

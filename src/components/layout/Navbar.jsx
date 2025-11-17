@@ -1,29 +1,30 @@
 // src/components/layout/Navbar.jsx
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext'; 
+import { useAuth } from '../../contexts/AuthContext';
 import { logout } from '../../services/authService';
-import { Button } from '../ui/Button'; 
+import { Button } from '../ui/Button';
 import { useTranslation } from 'react-i18next';
-import VolumeControl from '../common/VolumeControl'; // 1. Import VolumeControl
+import VolumeControl from '../common/VolumeControl';
 
 export default function Navbar() {
   const { currentUser, isAdmin } = useAuth();
   const navigate = useNavigate();
-  const { t } = useTranslation(); 
+  const { t } = useTranslation();
 
   const handleLogout = async () => {
     try {
       await logout();
       navigate('/login');
     } catch (error) {
-      console.error("Failed to log out", error);
+      console.error('Failed to log out', error);
     }
   };
 
   const goToLogin = () => navigate('/login');
   const goToSignup = () => navigate('/signup');
   const goToAdmin = () => navigate('/admin');
+  const goToProfile = () => navigate('/profile'); // Handler for profile
 
   return (
     <nav className="w-full bg-neutral-900 p-4 shadow-lg border-b border-neutral-700">
@@ -33,16 +34,25 @@ export default function Navbar() {
         </Link>
 
         <div className="flex items-center gap-4">
-          <VolumeControl /> {/* 2. Add VolumeControl component here */}
-          
+          <VolumeControl />
           {currentUser ? (
             <>
               <span className="text-neutral-300 hidden sm:block">
                 {currentUser.email}
               </span>
 
+              {/* MODIFIED: Show "My Profile" for ALL logged-in users */}
+              <Button
+                onClick={goToProfile}
+                variant="neutral"
+                className="py-2 px-4 text-sm"
+              >
+                My Profile
+              </Button>
+
+              {/* Show "Admin" *only* for admins */}
               {isAdmin && (
-                <Button 
+                <Button
                   onClick={goToAdmin}
                   variant="primary"
                   className="py-2 px-4 text-sm"

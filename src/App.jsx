@@ -1,19 +1,20 @@
 // src/App.jsx
 import React, { useEffect, lazy, Suspense } from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { ErrorBoundary } from 'react-error-boundary'; // 1. Import ErrorBoundary
+import { ErrorBoundary } from 'react-error-boundary';
 import { useAudio } from './hooks/useAudio';
 import WelcomeModal from './components/common/WelcomeModal';
 
 // Layout Imports are NOT lazy-loaded
-import ProtectedRoute from './components/layout/ProtectedRoute';
+import ProtectedRoute from './components/layout/ProtectedRoute'; // For Admins
+import LoggedInRoute from './components/layout/LoggedInRoute'; // For All Logged-In Users
 import MainLayout from './components/layout/MainLayout';
 import KioskLayout from './components/layout/KioskLayout';
 import AdminLayout from './components/layout/AdminLayout';
 
 // Import the fallback components
 import LoadingScreen from './components/common/LoadingScreen';
-import ErrorScreen from './components/common/ErrorScreen'; // 2. Import ErrorScreen
+import ErrorScreen from './components/common/ErrorScreen';
 
 // --- Page Imports are now LAZY-LOADED ---
 const LandingPage = lazy(() => import('./pages/LandingPage'));
@@ -25,21 +26,24 @@ const SignupPage = lazy(() => import('./pages/SignupPage'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 const AdminGame = lazy(() => import('./pages/AdminGame'));
 const AdminQuestionBanks = lazy(() => import('./pages/AdminQuestionBanks'));
-const AdminQuestionBankEdit = lazy(() => import('./pages/AdminQuestionBankEdit'));
+const AdminQuestionBankEdit = lazy(
+  () => import('./pages/AdminQuestionBankEdit')
+);
+const PlayerProfile = lazy(() => import('./pages/PlayerProfile'));
 
 // ... (AppInitializer is unchanged) ...
 function AppInitializer({ children }) {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const pin = params.get('pin');
-    
+
     if (pin) {
       sessionStorage.setItem('gamePin', pin);
       const cleanUrl = window.location.pathname + window.location.hash;
       window.history.replaceState(null, '', cleanUrl);
     }
   }, []);
-  
+
   return <>{children}</>;
 }
 
@@ -53,15 +57,10 @@ export default function App() {
 
   return (
     <AppInitializer>
-      <WelcomeModal
-        isOpen={!isUnlocked}
-        onConfirm={handleWelcomeConfirm}
-      />
+      <WelcomeModal isOpen={!isUnlocked} onConfirm={handleWelcomeConfirm} />
 
-      {/* 3. Wrap HashRouter in the ErrorBoundary */}
       <ErrorBoundary FallbackComponent={ErrorScreen}>
         <HashRouter>
-          {/* Wrap the Routes in Suspense to enable lazy loading */}
           <Suspense fallback={<LoadingScreen />}>
             <Routes>
               {/* Routes WITH Main Navbar (Login, Admin, etc.) */}
@@ -69,15 +68,28 @@ export default function App() {
                 <Route path="/" element={<LandingPage />} />
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/signup" element={<SignupPage />} />
+
+                {/* --- THIS IS THE FIX --- */}
+                {/* Changed to nested structure to match LoggedInRoute.jsx */}
+                <Route element={<LoggedInRoute />}>
+                  <Route path="/profile" element={<PlayerProfile />} />
+                </Route>
+                {/* --- END FIX --- */}
               </Route>
 
-              {/* Protected Admin Routes - NOW WRAPPED IN AdminLayout */}
+              {/* Protected Admin Routes - Uses the ADMIN-ONLY guard */}
               <Route element={<ProtectedRoute />}>
                 <Route element={<AdminLayout />}>
                   <Route path="/admin" element={<AdminDashboard />} />
                   <Route path="/admin/game/:gameId" element={<AdminGame />} />
-                  <Route path="/admin/question-banks" element={<AdminQuestionBanks />} />
-                  <Route path="/admin/question-banks/:bankId" element={<AdminQuestionBankEdit />} />
+                  <Route
+                    path="/admin/question-banks"
+                    element={<AdminQuestionBanks />}
+                  />
+                  <Route
+                    path="/admin/question-banks/:bankId"
+                    element={<AdminQuestionBankEdit />}
+                  />
                 </Route>
               </Route>
 

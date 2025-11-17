@@ -18,24 +18,43 @@ import { ThemeVisualizer } from '../components/admin/ThemeVisualizer';
 export default function AdminDashboard() {
   const { t } = useTranslation();
   const {
-    currentUser, loading,
+    currentUser,
+    loading,
     questionBanks,
-    selectedBankId, setSelectedBankId, games,
-    newGameName, setNewGameName, 
-    newGameTheme, setNewGameTheme,
-    customThemeData, setCustomThemeData,
+    selectedBankId,
+    setSelectedBankId,
+    games,
+    newGameName,
+    setNewGameName,
+    newGameTheme,
+    setNewGameTheme,
+    customThemeData,
+    setCustomThemeData,
     isModalOpen,
-    handleCreateGame, handleOpenGame, handleDeleteClick,
-    handleCloseModal, handleConfirmDelete, getBankDisplayName,
+    handleCreateGame,
+    handleOpenGame,
+    handleDeleteClick,
+    handleCloseModal,
+    handleConfirmDelete,
+    getBankDisplayName,
     themePresets,
     isSaveModalOpen,
     setIsSaveModalOpen,
     handleSavePreset,
     currentThemeData,
-
-    // --- NEW: Get Checkbox State ---
     showPreview,
     setShowPreview,
+
+    // --- SPRINT 14: Import new handlers ---
+    editingPreset,
+    isDeletePresetModalOpen,
+    presetToDelete,
+    handleDeletePresetClick,
+    handleCloseDeletePresetModal,
+    handleConfirmDeletePreset,
+    handleSelectPresetForEdit,
+    handleUpdatePreset,
+    handleCancelEdit,
   } = useAdminDashboard();
 
   return (
@@ -55,11 +74,13 @@ export default function AdminDashboard() {
           </Button>
         </Link>
       </div>
-      
+
       <Card className="mb-8">
         <CardContent className="p-6">
-          <CardTitle className="mb-4">{t('admin.dashboard.createGameTitle')}</CardTitle>
-          
+          <CardTitle className="mb-4">
+            {t('admin.dashboard.createGameTitle')}
+          </CardTitle>
+
           {loading ? (
             <p>{t('admin.dashboard.loading')}</p>
           ) : questionBanks.length === 0 ? (
@@ -72,9 +93,14 @@ export default function AdminDashboard() {
               </Link>
             </div>
           ) : (
-            <form onSubmit={handleCreateGame} className="flex flex-wrap gap-4 items-end">
+            <form
+              onSubmit={handleCreateGame}
+              className="flex flex-wrap gap-4 items-end"
+            >
               <div className="flex-1 min-w-[200px]">
-                <Label htmlFor="gameName">{t('admin.dashboard.gameNameLabel')}</Label>
+                <Label htmlFor="gameName">
+                  {t('admin.dashboard.gameNameLabel')}
+                </Label>
                 <Input
                   type="text"
                   id="gameName"
@@ -84,14 +110,18 @@ export default function AdminDashboard() {
                 />
               </div>
               <div className="flex-1 min-w-[200px]">
-                <Label htmlFor="bankSelect">{t('admin.dashboard.bankSelectLabel')}</Label>
+                <Label htmlFor="bankSelect">
+                  {t('admin.dashboard.bankSelectLabel')}
+                </Label>
                 <Select
                   id="bankSelect"
                   value={selectedBankId}
                   onChange={(e) => setSelectedBankId(e.target.value)}
                 >
-                  <option value="">{t('admin.dashboard.bankSelectPlaceholder')}</option>
-                  {questionBanks.map(bank => (
+                  <option value="">
+                    {t('admin.dashboard.bankSelectPlaceholder')}
+                  </option>
+                  {questionBanks.map((bank) => (
                     <option key={bank.id} value={bank.id}>
                       {getBankDisplayName(bank)}
                     </option>
@@ -101,7 +131,9 @@ export default function AdminDashboard() {
 
               {/* Updated Theme Select (unchanged from last step) */}
               <div className="flex-1 min-w-[200px]">
-                <Label htmlFor="themeSelect">{t('admin.dashboard.themeSelectLabel')}</Label>
+                <Label htmlFor="themeSelect">
+                  {t('admin.dashboard.themeSelectLabel')}
+                </Label>
                 <Select
                   id="themeSelect"
                   value={newGameTheme}
@@ -112,10 +144,10 @@ export default function AdminDashboard() {
                     <option value="flare">Solar Flare</option>
                     <option value="void">Mana Void</option>
                   </optgroup>
-                  
+
                   {themePresets.length > 0 && (
                     <optgroup label="My Presets">
-                      {themePresets.map(preset => (
+                      {themePresets.map((preset) => (
                         <option key={preset.id} value={preset.id}>
                           {preset.name}
                         </option>
@@ -130,16 +162,6 @@ export default function AdminDashboard() {
               <Button type="submit" variant="primary">
                 {t('admin.dashboard.createGameButton')}
               </Button>
-
-              {newGameTheme === 'custom' && (
-                <Button 
-                  type="button" 
-                  variant="neutral"
-                  onClick={() => setIsSaveModalOpen(true)}
-                >
-                  Save as Preset...
-                </Button>
-              )}
             </form>
           )}
         </CardContent>
@@ -151,11 +173,50 @@ export default function AdminDashboard() {
           {/* This column wrapper only shows if 'custom' is selected */}
           {newGameTheme === 'custom' && (
             <>
-              <CustomThemeForm 
-                themeData={customThemeData} 
-                onChange={setCustomThemeData} 
+              <h2 className="text-2xl font-display font-bold mb-4">
+                {editingPreset
+                  ? `Editing: ${editingPreset.name}`
+                  : 'Create Custom Theme'}
+              </h2>
+
+              <CustomThemeForm
+                themeData={customThemeData}
+                onChange={setCustomThemeData}
               />
-              {/* --- NEW: Show Preview Checkbox --- */}
+
+              {/* --- SPRINT 14: Show different buttons for Save/Update --- */}
+              <div className="flex items-center gap-3 mt-4">
+                {editingPreset ? (
+                  // We are in "Edit Mode"
+                  <>
+                    <Button
+                      type="button"
+                      variant="primary"
+                      onClick={handleUpdatePreset}
+                    >
+                      Update Preset
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="neutral"
+                      onClick={handleCancelEdit}
+                    >
+                      Cancel
+                    </Button>
+                  </>
+                ) : (
+                  // We are in "Create New" mode
+                  <Button
+                    type="button"
+                    variant="neutral"
+                    onClick={() => setIsSaveModalOpen(true)}
+                  >
+                    Save as New Preset...
+                  </Button>
+                )}
+              </div>
+              {/* --- END SPRINT 14 --- */}
+
               <div className="flex items-center gap-3 mt-4 p-4 bg-neutral-800 rounded-lg border-2 border-neutral-700">
                 <input
                   type="checkbox"
@@ -164,7 +225,10 @@ export default function AdminDashboard() {
                   onChange={(e) => setShowPreview(e.target.checked)}
                   className="h-5 w-5 rounded bg-accent-black border-neutral-700 text-primary focus:ring-primary focus:ring-offset-neutral-800"
                 />
-                <Label htmlFor="showPreview" className="mb-0 !text-neutral-100 font-normal">
+                <Label
+                  htmlFor="showPreview"
+                  className="mb-0 !text-neutral-100 font-normal"
+                >
                   Show Live Preview
                 </Label>
               </div>
@@ -172,7 +236,7 @@ export default function AdminDashboard() {
           )}
         </div>
         <div>
-          {/* --- NEW: Visualizer is now conditional on 'custom' theme AND checkbox --- */}
+          {/* Visualizer is now conditional on 'custom' theme AND checkbox */}
           {newGameTheme === 'custom' && showPreview && (
             <ThemeVisualizer themeData={currentThemeData} />
           )}
@@ -180,33 +244,93 @@ export default function AdminDashboard() {
       </div>
       {/* --- END UPDATED LAYOUT --- */}
 
+      {/* --- SPRINT 14: NEW CARD for Preset Management --- */}
+      <Card className="mb-8">
+        <CardContent className="p-6">
+          <CardTitle className="mb-4">My Theme Presets</CardTitle>
+          {themePresets.length === 0 ? (
+            <p className="text-neutral-300 text-center py-4">
+              You haven't saved any theme presets yet.
+            </p>
+          ) : (
+            <div className="space-y-4">
+              {themePresets.map((preset) => (
+                <div
+                  key={preset.id}
+                  className="border-b border-neutral-700 p-4 flex justify-between items-center hover:bg-neutral-800"
+                >
+                  <p className="font-bold text-lg text-neutral-100">
+                    {preset.name}
+                  </p>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => handleSelectPresetForEdit(preset)}
+                      variant="neutral"
+                      className="py-2"
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      onClick={() => handleDeletePresetClick(preset)}
+                      variant="danger"
+                      className="py-2"
+                    >
+                      Delete
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+      {/* --- END SPRINT 14 --- */}
 
       <Card>
         <CardContent className="p-6">
-          <CardTitle className="mb-4">{t('admin.dashboard.myGamesTitle')}</CardTitle>
-          
+          <CardTitle className="mb-4">
+            {t('admin.dashboard.myGamesTitle')}
+          </CardTitle>
+
           {loading ? (
             <p>{t('admin.dashboard.loading')}</p>
           ) : games.length === 0 ? (
-            <p className="text-neutral-300 text-center py-4">{t('admin.dashboard.noGames')}</p>
+            <p className="text-neutral-300 text-center py-4">
+              {t('admin.dashboard.noGames')}
+            </p>
           ) : (
             <div className="space-y-4">
-              {games.map(game => {
-                const bank = questionBanks.find(b => b.id === game.questionBankId);
-                const bankName = bank ? (bank.name || bank.title || t('admin.dashboard.unknownBank')) : t('admin.dashboard.unknownBank');
-                
+              {games.map((game) => {
+                const bank = questionBanks.find(
+                  (b) => b.id === game.questionBankId
+                );
+                const bankName = bank
+                  ? bank.name ||
+                    bank.title ||
+                    t('admin.dashboard.unknownBank')
+                  : t('admin.dashboard.unknownBank');
+
                 return (
-                  <div key={game.id} className="border-b border-neutral-700 p-4 flex justify-between items-center hover:bg-neutral-800">
+                  <div
+                    key={game.id}
+                    className="border-b border-neutral-700 p-4 flex justify-between items-center hover:bg-neutral-800"
+                  >
                     <div>
                       <p className="font-bold text-lg text-neutral-100">
                         {game.gameName || t('admin.dashboard.untitledGame')}
                       </p>
                       <p className="text-sm text-neutral-300">
-                        {t('gamePin')} <span className="text-primary-light font-semibold">{game.gamePin}</span>
+                        {t('gamePin')}{' '}
+                        <span className="text-primary-light font-semibold">
+                          {game.gamePin}
+                        </span>
                       </p>
-                      <p className="text-sm text-neutral-300">{t('admin.dashboard.bankPRefix')}: {bankName}</p>
                       <p className="text-sm text-neutral-300">
-                        {t('admin.dashboard.statePRefix')}: <span className="capitalize">{game.state}</span>
+                        {t('admin.dashboard.bankPRefix')}: {bankName}
+                      </p>
+                      <p className="text-sm text-neutral-300">
+                        {t('admin.dashboard.statePRefix')}:{' '}
+                        <span className="capitalize">{game.state}</span>
                       </p>
                       <p className="text-xs text-neutral-500">
                         {game.createdAt?.toDate().toLocaleString()}
@@ -234,7 +358,7 @@ export default function AdminDashboard() {
             </div>
           )}
         </CardContent>
-      </Card> 
+      </Card>
 
       <ConfirmModal
         isOpen={isModalOpen}
@@ -243,6 +367,17 @@ export default function AdminDashboard() {
         title={t('admin.dashboard.modal.title')}
         message={t('admin.dashboard.modal.message')}
         confirmText={t('admin.dashboard.modal.confirmText')}
+        confirmVariant="danger"
+      />
+
+      {/* --- SPRINT 14: New Modal for Deleting Presets --- */}
+      <ConfirmModal
+        isOpen={isDeletePresetModalOpen}
+        onClose={handleCloseDeletePresetModal}
+        onConfirm={handleConfirmDeletePreset}
+        title="Delete Theme Preset"
+        message={`Are you sure you want to delete the preset "${presetToDelete?.name}"? This action cannot be undone.`}
+        confirmText="Delete Preset"
         confirmVariant="danger"
       />
 

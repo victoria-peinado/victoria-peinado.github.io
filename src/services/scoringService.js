@@ -1,4 +1,13 @@
-import { collection, doc, getDocs, query, where, writeBatch, increment } from 'firebase/firestore';
+// src/services/scoringService.js
+import {
+  collection,
+  doc,
+  getDocs,
+  query,
+  where,
+  writeBatch,
+  increment, // This was already here, which is perfect
+} from 'firebase/firestore';
 import { db } from '../firebase';
 
 /**
@@ -9,18 +18,30 @@ import { db } from '../firebase';
  * @param {number} questionDuration - Duration in seconds
  * @returns {Promise} - Number of players who scored points
  */
-export async function calculateAndUpdateScores(gameId, questionIndex, questionStartTime, questionDuration) {
+export async function calculateAndUpdateScores(
+  gameId,
+  questionIndex,
+  questionStartTime,
+  questionDuration
+) {
   try {
     // Step 1: Get all answers for current question
     const answersRef = collection(db, `gameSessions/${gameId}/answers`);
-    const answersQuery = query(answersRef, where('questionIndex', '==', questionIndex));
+    const answersQuery = query(
+      answersRef,
+      where('questionIndex', '==', questionIndex)
+    );
     const answersSnapshot = await getDocs(answersQuery);
 
     // Calculate cutoff time
-    const startTimeMs = questionStartTime.toMillis ? questionStartTime.toMillis() : questionStartTime;
-    const cutoffTimeMs = startTimeMs + (questionDuration * 1000);
+    const startTimeMs = questionStartTime.toMillis
+      ? questionStartTime.toMillis()
+      : questionStartTime;
+    const cutoffTimeMs = startTimeMs + questionDuration * 1000;
 
-    console.log(`Question started at: ${startTimeMs}, cutoff at: ${cutoffTimeMs}`);
+    console.log(
+      `Question started at: ${startTimeMs}, cutoff at: ${cutoffTimeMs}`
+    );
 
     // Step 2: Filter correct answers submitted within time limit
     const correctAnswers = [];
@@ -32,14 +53,20 @@ export async function calculateAndUpdateScores(gameId, questionIndex, questionSt
       if (answerData.correct && submittedAtMs <= cutoffTimeMs) {
         correctAnswers.push({
           playerId: answerData.playerId,
-          submittedAt: submittedAtMs
+          submittedAt: submittedAtMs,
         });
       } else if (answerData.correct && submittedAtMs > cutoffTimeMs) {
-        console.log(`Player ${answerData.playerId} answered too late (${submittedAtMs - cutoffTimeMs}ms over)`);
+        console.log(
+          `Player ${answerData.playerId} answered too late (${
+            submittedAtMs - cutoffTimeMs
+          }ms over)`
+        );
       }
     });
 
-    console.log(`Found ${correctAnswers.length} valid correct answers for question ${questionIndex}`);
+    console.log(
+      `Found ${correctAnswers.length} valid correct answers for question ${questionIndex}`
+    );
 
     // If no correct answers, nothing to do
     if (correctAnswers.length === 0) {
@@ -47,7 +74,7 @@ export async function calculateAndUpdateScores(gameId, questionIndex, questionSt
     }
 
     // Step 3: Find fastest and slowest times for speed bonus calculation
-    const times = correctAnswers.map(a => a.submittedAt);
+    const times = correctAnswers.map((a) => a.submittedAt);
     const fastestTime = Math.min(...times);
     const slowestTime = Math.max(...times);
     const timeRange = slowestTime - fastestTime || 1; // Avoid division by zero
@@ -60,20 +87,34 @@ export async function calculateAndUpdateScores(gameId, questionIndex, questionSt
       const speedBonus = Math.round(speedRatio * 40);
       const pointsEarned = 100 + speedBonus;
 
-      console.log(`Player ${answer.playerId}: ${pointsEarned} points (base: 100, speed bonus: ${speedBonus})`);
+      // --- SPRINT 14: Calculate answer time for stat tracking ---
+      const answerTimeMs = answer.submittedAt - startTimeMs;
+      // ---
+
+      console.log(
+        `Player ${answer.playerId}: ${pointsEarned} points (base: 100, speed bonus: ${speedBonus})`
+      );
 
       // Update player's total score
-      const playerRef = doc(db, `gameSessions/${gameId}/players/${answer.playerId}`);
+      const playerRef = doc(
+        db,
+        `gameSessions/${gameId}/players/${answer.playerId}`
+      );
       batch.update(playerRef, {
-        score: increment(pointsEarned)
+        score: increment(pointsEarned),
+        // --- SPRINT 14: Update in-game stats for final profile write ---
+        questionsCorrect: increment(1),
+        totalAnswerTimeMs: increment(answerTimeMs),
+        // ---
       });
     });
 
     // Step 5: Commit all score updates atomically
     await batch.commit();
-    console.log(`Successfully updated scores for ${correctAnswers.length} players`);
+    console.log(
+      `Successfully updated scores for ${correctAnswers.length} players`
+    );
     return correctAnswers.length;
-
   } catch (error) {
     console.error('Error calculating scores:', error);
     throw error;
@@ -97,6 +138,6 @@ export function getScoringStats(times) {
     slowestTime,
     avgTime,
     timeRange: slowestTime - fastestTime,
-    totalPlayers: times.length
+    totalPlayers: times.length,
   };
 }
