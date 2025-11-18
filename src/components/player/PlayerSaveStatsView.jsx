@@ -9,7 +9,7 @@ import { doc } from 'firebase/firestore';
 import { db } from '../../firebase';
 import LoadingSpinner from '../common/LoadingSpinner';
 import FinalLeaderboard from '../common/FinalLeaderboard'; // 1. Import FinalLeaderboard
-
+// commit
 export default function PlayerSaveStatsView({ gameId, playerId }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
