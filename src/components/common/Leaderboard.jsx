@@ -1,34 +1,12 @@
 // src/components/common/Leaderboard.jsx
-import React, { useState, useEffect, memo } from 'react'; // 1. Import memo
+import React, { memo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { db } from '../../firebase';
-import { collection, query, orderBy, onSnapshot, limit } from 'firebase/firestore';
+import { useLeaderboard } from '../../hooks/useLeaderboard';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LabelList } from 'recharts';
 
-// 2. Wrap the component function in memo()
 export default memo(function Leaderboard({ gameId }) {
-  const [leaderboard, setLeaderboard] = useState([]);
-  const [loading, setLoading] = useState(true);
   const { t } = useTranslation();
-
-  useEffect(() => {
-    if (!gameId) {
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
-    const playersRef = collection(db, `gameSessions/${gameId}/players`);
-    const q = query(playersRef, orderBy('score', 'desc'), limit(10));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const playersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setLeaderboard(playersData);
-      setLoading(false);
-    }, (error) => {
-      console.error("Error fetching leaderboard:", error);
-      setLoading(false);
-    });
-    return () => unsubscribe();
-  }, [gameId]);
+  const { leaderboard, loading } = useLeaderboard(gameId);
 
   const getBarColor = (rank) => {
     switch(rank) {
@@ -45,7 +23,7 @@ export default memo(function Leaderboard({ gameId }) {
   if (leaderboard.length === 0) {
     return (
       <div className="bg-neutral-800 bg-opacity-50 rounded-lg p-12 text-center">
-        <p className="text-neutral-100 text-2xl font-light">{t('leaderboard.noScores')}</p>
+        <p className="text-neutral-100 text-2xl font-light">{t('leaderband.noScores')}</p>
       </div>
     );
   }

@@ -3,7 +3,12 @@ import { useState } from 'react';
 // UPDATED: Import from new service
 import { joinGame } from '../services/player/playerAuth';
 
-export function usePlayerJoin(gameSession, currentUser, onJoinSuccess, handleMessage) {
+export function usePlayerJoin(
+  gameSession,
+  currentUser,
+  onJoinSuccess,
+  handleMessage
+) {
   const [isJoining, setIsJoining] = useState(false);
   // handleMessage is passed in from the parent component
 
@@ -20,21 +25,30 @@ export function usePlayerJoin(gameSession, currentUser, onJoinSuccess, handleMes
     }
 
     if (!currentUser) {
-      handleMessage('You must be logged in to join!', 'error');
+      // This check is still valid, as usePlayerAuth ensures we have a
+      // (potentially anonymous) user before this component is rendered.
+      handleMessage('Still authenticating... Please try again in a moment.', 'error');
       return;
     }
 
     setIsJoining(true);
     try {
-      // UPDATED: Using new service
-      const uid = await joinGame(gameSession.id, currentUser.uid, nickname.trim());
+      // --- SPRINT 16: ADDED isAnonymous FLAG ---
+      const uid = await joinGame(
+        gameSession.id,
+        currentUser.uid,
+        nickname.trim(),
+        currentUser.isAnonymous // Pass the anonymous status
+      );
+      // --- END SPRINT 16 ---
+
       localStorage.setItem('triviaPlayerId', uid);
       localStorage.setItem('triviaNickname', nickname.trim());
       localStorage.setItem('triviaGameId', gameSession.id);
-      
+
       // Call the callback to update page state
       onJoinSuccess(uid, nickname.trim());
-      
+
       handleMessage(`Welcome, ${nickname}!`, 'success');
     } catch (error) {
       handleMessage(error.message, 'error');

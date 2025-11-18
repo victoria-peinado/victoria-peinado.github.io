@@ -34,6 +34,8 @@ const PlayerProfile = lazy(() => import('./pages/PlayerProfile'));
 // ... (AppInitializer is unchanged) ...
 function AppInitializer({ children }) {
   useEffect(() => {
+    // This logic is for the old ?pin= query param, which is fine to keep
+    // as a fallback for old links.
     const params = new URLSearchParams(window.location.search);
     const pin = params.get('pin');
 
@@ -69,12 +71,15 @@ export default function App() {
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/signup" element={<SignupPage />} />
 
-                {/* --- THIS IS THE FIX --- */}
-                {/* Changed to nested structure to match LoggedInRoute.jsx */}
+                {/* --- THIS IS THE SPRINT 16 CHANGE --- */}
+                {/* 1. The route is now /join and can accept an optional :gamePin */}
+                <Route path="/join/:gamePin?" element={<PlayerPinEntry />} />
+                {/* 2. It is now inside MainLayout, so it has the site navbar */}
+                {/* --- END SPRINT 16 CHANGE --- */}
+
                 <Route element={<LoggedInRoute />}>
                   <Route path="/profile" element={<PlayerProfile />} />
                 </Route>
-                {/* --- END FIX --- */}
               </Route>
 
               {/* Protected Admin Routes - Uses the ADMIN-ONLY guard */}
@@ -89,13 +94,14 @@ export default function App() {
                   <Route
                     path="/admin/question-banks/:bankId"
                     element={<AdminQuestionBankEdit />}
+                  BY_LINE_NUMBER
                   />
                 </Route>
               </Route>
 
               {/* Routes WITHOUT Main Navbar (Player/Stream Kiosk Mode) */}
               <Route element={<KioskLayout />}>
-                <Route path="/play" element={<PlayerPinEntry />} />
+                {/* PlayerPinEntry was moved to MainLayout */}
                 <Route path="/player/:gameId" element={<PlayerPage />} />
                 <Route path="/stream/:gameId" element={<StreamPage />} />
               </Route>

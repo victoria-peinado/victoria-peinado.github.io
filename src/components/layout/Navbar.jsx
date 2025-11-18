@@ -24,7 +24,10 @@ export default function Navbar() {
   const goToLogin = () => navigate('/login');
   const goToSignup = () => navigate('/signup');
   const goToAdmin = () => navigate('/admin');
-  const goToProfile = () => navigate('/profile'); // Handler for profile
+  const goToProfile = () => navigate('/profile');
+
+  // Helper to check if user is fully registered (not anonymous)
+  const isRegistered = currentUser && !currentUser.isAnonymous;
 
   return (
     <nav className="w-full bg-neutral-900 p-4 shadow-lg border-b border-neutral-700">
@@ -35,13 +38,15 @@ export default function Navbar() {
 
         <div className="flex items-center gap-4">
           <VolumeControl />
-          {currentUser ? (
+          
+          {/* --- THIS IS THE FIX --- */}
+          {/* Only show Profile/Logout if the user is REGISTERED (not anonymous) */}
+          {isRegistered ? (
             <>
               <span className="text-neutral-300 hidden sm:block">
                 {currentUser.email}
               </span>
 
-              {/* MODIFIED: Show "My Profile" for ALL logged-in users */}
               <Button
                 onClick={goToProfile}
                 variant="neutral"
@@ -71,6 +76,7 @@ export default function Navbar() {
             </>
           ) : (
             <>
+              {/* Anonymous users (Guests) see this section */}
               <Button
                 onClick={goToLogin}
                 variant="neutral"

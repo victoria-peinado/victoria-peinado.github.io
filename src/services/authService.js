@@ -6,6 +6,7 @@ import {
   signOut,
   onAuthStateChanged,
   sendPasswordResetEmail,
+  signInAnonymously as firebaseSignInAnonymously, // 1. RENAME the imported function
 } from 'firebase/auth';
 // SPRINT 14: Import the new createProfile function
 import { createProfile } from './player/profileService';
@@ -68,4 +69,13 @@ export const onAuthChange = (callback) => {
  */
 export const sendPasswordReset = (email) => {
   return sendPasswordResetEmail(auth, email);
+};
+
+/**
+ * 2. NEW: Signs in the user anonymously.
+ * This will create a temporary user in Firebase Auth.
+ */
+export const signInAnonymously = () => {
+  // 3. Call the renamed Firebase function
+  return firebaseSignInAnonymously(auth);
 };

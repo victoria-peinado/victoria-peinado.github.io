@@ -46,13 +46,19 @@
     |   +---admin
     |   |       AdminControls.jsx
     |   |       BroadcastCard.jsx
+    |   |       CreateGameForm.jsx
     |   |       CsvUploader.jsx
     |   |       CustomThemeForm.jsx
+    |   |       EditQuestionModal.jsx
+    |   |       GameList.jsx
     |   |       GameStatus.jsx
     |   |       LivePlayerList.jsx
     |   |       PlayerRow.jsx
+    |   |       QuestionForm.jsx
+    |   |       QuestionList.jsx
     |   |       SavePresetModal.jsx
     |   |       ShareGameCard.jsx
+    |   |       ThemePresetList.jsx
     |   |       ThemeVisualizer.jsx
     |   |
     |   +---common
@@ -73,6 +79,7 @@
     |   |       AdminSidebar.jsx
     |   |       FullScreenCenter.jsx
     |   |       KioskLayout.jsx
+    |   |       LoggedInRoute.jsx
     |   |       MainLayout.jsx
     |   |       Navbar.jsx
     |   |       PlayerNavbar.jsx
@@ -83,12 +90,14 @@
     |   |       PlayerAnswerView.jsx
     |   |       PlayerJoinForm.jsx
     |   |       PlayerQuestionView.jsx
+    |   |       PlayerStateRenderer.jsx
     |   |       PlayerWaitingView.jsx
     |   |
     |   +---stream
     |   |       StreamAnswerView.jsx
     |   |       StreamHeader.jsx
     |   |       StreamQuestionView.jsx
+    |   |       StreamStateRenderer.jsx
     |   |       StreamWaitingView.jsx
     |   |
     |   \---ui
@@ -104,22 +113,41 @@
     |       AuthContext.jsx
     |
     +---hooks
-    |       useAdminDashboard.js
-    |       useAdminGame.js
-    |       useAdminQuestionBanks.js
-    |       useAudio.js
-    |       useAuthForm.js
-    |       useCsvUploader.js
-    |       useGameSession.js
-    |       useLeaderboard.js
-    |       useLivePlayerList.js
-    |       usePinEntry.js
-    |       usePlayerActions.js
-    |       usePlayerAuth.js
-    |       usePlayerJoin.js
-    |       usePlayerState.js
-    |       useQuestionBank.js
-    |       useQuestionBankEditor.js
+    |   |   useAdminDashboard.js
+    |   |   useAdminGame.js
+    |   |   useAdminQuestionBanks.js
+    |   |   useAudio.js
+    |   |   useAuthForm.js
+    |   |   useCsvUploader.js
+    |   |   useGameSession.js
+    |   |   useLeaderboard.js
+    |   |   useLivePlayerList.js
+    |   |   usePinEntry.js
+    |   |   usePlayerActions.js
+    |   |   usePlayerAuth.js
+    |   |   usePlayerJoin.js
+    |   |   usePlayerState.js
+    |   |   useQuestionBank.js
+    |   |   useQuestionBankEditor.js
+    |   |   useUserProfile.js
+    |   |
+    |   +---admin
+    |   |       useAdminBankLoader.js
+    |   |       useAdminCreateGame.js
+    |   |       useAdminGameList.js
+    |   |       useAdminTheme.js
+    |   |       useBroadcast.js
+    |   |       useGameControls.js
+    |   |       useShareLink.js
+    |   |
+    |   +---bank
+    |   |       useBankList.js
+    |   |       useCreateBank.js
+    |   |       useQuestionForm.js
+    |   |       useQuestionList.js
+    |   |
+    |   \---player
+    |           usePlayerSession.js
     |
     +---pages
     |       AdminDashboard.jsx
@@ -130,6 +158,7 @@
     |       LoginPage.jsx
     |       PlayerPage.jsx
     |       PlayerPinEntry.jsx
+    |       PlayerProfile.jsx
     |       SignupPage.jsx
     |       StreamPage.jsx
     |
@@ -153,6 +182,8 @@
     |           playerAdmin.js
     |           playerAuth.js
     |           playerGameplay.js
+    |           profileService.js
     |
     \---utils
             animations.js
+            themeConstants.js

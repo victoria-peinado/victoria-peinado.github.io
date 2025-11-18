@@ -1,31 +1,36 @@
 // src/components/stream/StreamHeader.jsx
 import React from 'react';
 import QRCode from 'react-qr-code';
-import { useTranslation } from 'react-i18next'; // 1. Import
+import { useTranslation } from 'react-i18next';
 
 function StreamHeader({ gamePin }) {
-  const { t } = useTranslation(); // 2. Initialize
-  const joinUrl = `https://magictrivia.org/?pin=${gamePin}`;
+  const { t } = useTranslation();
+
+  // --- SPRINT 16 FIX: Use window.location.origin ---
+  // Gets the base URL (e.g., https://magictrivia.org or http://localhost:3000)
+  const baseUri = window.location.origin;
+  // The full URL uses the base, the hash (#), and the new /join/ route
+  const joinUrl = `${baseUri}/#/join/${gamePin}`;
+  // --- END SPRINT 16 FIX ---
 
   return (
     <div className="absolute top-0 left-0 right-0 p-6 flex justify-between items-start z-10">
-      
-      {/* 3. Game PIN with new theme */}
-      <div className="bg-neutral-800 bg-opacity-80 rounded-lg p-6 shadow-lg 
-                      border-2 border-neutral-700">
+      <div
+        className="bg-neutral-800 bg-opacity-80 rounded-lg p-6 shadow-lg 
+                      border-2 border-neutral-700"
+      >
         <div className="text-2xl text-neutral-100 font-bold mb-2 uppercase tracking-widest">
-          {t('gamePin')} {/* 4. Use i18n key */}
+          {t('gamePin')}
         </div>
         <div className="text-6xl text-primary-light font-display font-extrabold tracking-wider">
           {gamePin}
         </div>
       </div>
 
-      {/* QR Code */}
       <div className="bg-white p-4 rounded-lg shadow-lg">
         <QRCode
           value={joinUrl}
-          size={160} 
+          size={160}
           bgColor="#FFFFFF"
           fgColor="#000000"
         />

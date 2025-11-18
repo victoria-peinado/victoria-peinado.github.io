@@ -42,9 +42,6 @@ export const getProfile = async (userId) => {
 export const createProfile = async (userId, email, displayName) => {
   try {
     const profileRef = doc(db, 'profiles', userId);
-    // --- THIS IS THE FIX ---
-    // Use setDoc with { merge: true } to *create* the doc
-    // but *not* overwrite it if it somehow already exists.
     await setDoc(
       profileRef,
       {
@@ -149,17 +146,14 @@ export const updateProfileStats = async (gameId, gameName) => {
       // --- B. Update the Main Profile Document ---
       const profileRef = doc(db, `profiles/${player.userId}`);
       const profileStatsUpdate = {
-        stats: { // We must set the *whole* stats object with increments
+        stats: {
+          // We must set the *whole* stats object with increments
           gamesPlayed: increment(1),
           totalQuestionsCorrect: increment(player.questionsCorrect),
           totalAnswerTimeMs: increment(player.totalAnswerTimeMs),
         }
       };
       
-      // --- THIS IS THE FIX ---
-      // Use batch.set with { merge: true } instead of batch.update
-      // This will CREATE the profile doc if it's missing, or
-      // UPDATE it if it already exists.
       batch.set(profileRef, profileStatsUpdate, { merge: true });
     }
 
@@ -173,7 +167,89 @@ export const updateProfileStats = async (gameId, gameName) => {
   }
 };
 
-// --- NEW FUNCTION FOR PLAYER PROFILE PAGE ---
+// --- SPRINT 16: NEW FUNCTION ---
+/**
+ * Migrates a single anonymous player's game stats to a newly registered user profile.
+ * This is called immediately after a user signs up.
+ * @param {string} anonId - The anonymous player's UID/ID (used in game session).
+ * @param {string} newUserUid - The new permanent UID of the registered user.
+ * @param {string} gameId - The ID of the game that was just played.
+ */
+export const migrateAnonymousStats = async (anonId, newUserUid, gameId) => {
+  console.log(`Starting migration for anonId: ${anonId} to UID: ${newUserUid}`);
+  try {
+    const batch = writeBatch(db);
+    const gameDate = serverTimestamp();
+
+    // 1. Get the Anonymous Player's final stats
+    const playerRef = doc(db, `gameSessions/${gameId}/players/${anonId}`);
+    const playerSnap = await getDoc(playerRef);
+
+    if (!playerSnap.exists()) {
+      console.warn(`Anonymous player ${anonId} not found for migration.`);
+      return;
+    }
+    const player = playerSnap.data();
+
+    // 2. Get the game session name (required for match history)
+    const gameRef = doc(db, 'gameSessions', gameId);
+    const gameSnap = await getDoc(gameRef);
+    const gameName = gameSnap.data()?.gameName || 'Trivia Game';
+
+    // 3. Determine final rank by checking all players in the session
+    const playersRef = collection(db, `gameSessions/${gameId}/players`);
+    const leaderboardQuery = query(
+      playersRef,
+      where('score', '>', -1) // Fetch all players
+    );
+    const leaderboardSnap = await getDocs(leaderboardQuery);
+    const sortedLeaderboard = leaderboardSnap.docs
+      .map((d) => ({ id: d.id, ...d.data() }))
+      .sort((a, b) => b.score - a.score);
+    const rank = sortedLeaderboard.findIndex((p) => p.id === anonId) + 1; // Find the anon player's rank
+
+    // 4. Calculate final stats
+    const avgAnswerTime =
+      player.questionsCorrect > 0
+        ? player.totalAnswerTimeMs / player.questionsCorrect
+        : 0;
+
+    // 5. Update Match History (Targetting the new user's profile)
+    const historyDocRef = doc(
+      db,
+      `profiles/${newUserUid}/matchHistory/${gameId}`
+    );
+    batch.set(historyDocRef, {
+      gameId: gameId,
+      gameName: gameName,
+      gameDate: gameDate,
+      finalRank: rank,
+      finalScore: player.score,
+      questionsCorrect: player.questionsCorrect,
+      avgAnswerTime: avgAnswerTime,
+    });
+
+    // 6. Update Main Profile Stats (Targetting the new user's profile)
+    const profileRef = doc(db, `profiles/${newUserUid}`);
+    const profileStatsUpdate = {
+      stats: {
+        gamesPlayed: increment(1),
+        totalQuestionsCorrect: increment(player.questionsCorrect),
+        totalAnswerTimeMs: increment(player.totalAnswerTimeMs),
+      },
+    };
+    batch.set(profileRef, profileStatsUpdate, { merge: true }); // Use set/merge to ensure the doc exists or is updated
+
+    // 7. Commit
+    await batch.commit();
+    console.log(
+      `Successfully migrated stats for anonymous user ${anonId} to profile ${newUserUid}`
+    );
+  } catch (error) {
+    console.error('Error migrating anonymous stats:', error);
+  }
+};
+// --- END SPRINT 16 ---
 
 /**
  * Gets a paginated list of a user's match history. (Unchanged)

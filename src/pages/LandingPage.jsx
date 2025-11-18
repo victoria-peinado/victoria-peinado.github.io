@@ -1,5 +1,5 @@
 // src/pages/LandingPage.jsx
-import React, { useEffect } from 'react'; // 1. Import useEffect
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Button } from '../components/ui/Button';
@@ -10,17 +10,19 @@ export default function LandingPage() {
   const { t } = useTranslation();
   const { setMusic } = useAudio();
   const navigate = useNavigate();
-  
+
   // 3. This function is for the main "Enter" button
   const handleEnter = () => {
-    // PlayerPage will handle switching to lobby music
-    navigate('/play');
+    // --- THIS IS THE FIX ---
+    // Change navigation from '/play' to our new '/join' route
+    navigate('/join');
+    // --- END FIX ---
   };
 
   // 4. New useEffect to set music for this page
   useEffect(() => {
     // This will only play if audio is already unlocked
-    setMusic('music_ambient.mp3'); 
+    setMusic('music_ambient.mp3');
   }, [setMusic]);
 
   return (
@@ -35,10 +37,10 @@ export default function LandingPage() {
           <p className="text-lg md:text-xl text-neutral-200 mb-8 max-w-2xl mx-auto">
             {t('landing.hero.subtitle')}
           </p>
-          
-          <Button 
+
+          <Button
             onClick={handleEnter}
-            variant="primary" 
+            variant="primary"
             className="text-2xl px-10 py-4"
             // 6. No longer needs to be disabled!
           >

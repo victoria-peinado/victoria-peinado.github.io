@@ -1,24 +1,17 @@
 // src/components/admin/ShareGameCard.jsx
-import React, { useState } from 'react';
+import React from 'react';
+// We no longer import useState here
 import { Card, CardContent, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 
-export default function ShareGameCard({ gamePin, gameId }) {
-  const [copied, setCopied] = useState(false);
-
-  // Define the share URL using the game pin
-  const shareUrl = `https://magictrivia.org/?pin=${gamePin}`;
-
-  const handleCopyLink = () => {
-    navigator.clipboard.writeText(shareUrl).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000); // Reset after 2 seconds
-    }).catch(err => {
-      console.error('Failed to copy: ', err);
-    });
-  };
-
+export default function ShareGameCard({
+  gamePin,
+  copied,
+  shareUrl,
+  handleCopyLink,
+}) {
+  // All logic (useState, shareUrl, handleCopyLink) has been moved to useShareLink.js
   return (
     <Card>
       <CardContent className="p-6">

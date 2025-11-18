@@ -5,14 +5,10 @@ import { useTranslation } from 'react-i18next';
 import { useGameSession } from '../hooks/useGameSession';
 import { useQuestionBank } from '../hooks/useQuestionBank';
 import { useAudio } from '../hooks/useAudio';
-import StreamWaitingView from '../components/stream/StreamWaitingView';
-import StreamQuestionView from '../components/stream/StreamQuestionView';
-import StreamAnswerView from '../components/stream/StreamAnswerView';
-import Leaderboard from '../components/common/Leaderboard';
 import LoadingScreen from '../components/common/LoadingScreen';
 import ErrorScreen from '../components/common/ErrorScreen';
 import StreamHeader from '../components/stream/StreamHeader';
-import FinalLeaderboard from '../components/common/FinalLeaderboard';
+import StreamStateRenderer from '../components/stream/StreamStateRenderer'; // <-- NEW IMPORT
 
 export default function StreamPage() {
   const { gameId } = useParams();
@@ -21,7 +17,7 @@ export default function StreamPage() {
   const { questions } = useQuestionBank(gameSession?.questionBankId);
   const { setMusic } = useAudio();
 
-  useEffect(() => {
+  useEffect(() => { // <-- FIX: Removed the stray period
     if (!gameSession) return;
     switch (gameSession.state) {
       case 'waiting': setMusic('music_lobby.mp3'); break;
@@ -46,52 +42,20 @@ export default function StreamPage() {
   const theme = gameSession.theme || 'default';
   const customThemeData = gameSession.customThemeData || null;
 
-  // Define the style object to override CSS variables
-  // This now includes ALL theme variables from your picker
   const themeStyles = (theme === 'custom' && customThemeData) ? {
     '--color-primary': customThemeData.primary,
     '--color-primary-light': customThemeData.primaryLight,
     '--color-primary-dark': customThemeData.primaryDark,
     '--color-secondary': customThemeData.secondary,
     '--color-secondary-dark': customThemeData.secondaryDark,
-    '--color-text-on-primary': customThemeData.textOnPrimary, // <-- FIX 
-    '--color-accent-green': customThemeData.accentGreen,     // <-- ADDED
-    '--color-accent-blue': customThemeData.accentBlue,       // <-- ADDED
-    '--color-accent-black': customThemeData.accentBlack,     // <-- ADDED
+    '--color-text-on-primary': customThemeData.textOnPrimary,
+    '--color-accent-green': customThemeData.accentGreen,
+    '--color-accent-blue': customThemeData.accentBlue,
+    '--color-accent-black': customThemeData.accentBlack,
   } : {};
   // --- END UPDATED THEME LOGIC ---
 
-  const renderGameState = () => {
-    switch (gameSession.state) {
-      case 'waiting':
-        return <StreamWaitingView gamePin={gameSession.gamePin} />; 
-      case 'questionactive':
-        return <StreamQuestionView gameSession={gameSession} questions={questions} />;
-      case 'answerrevealed':
-        return <StreamAnswerView gameSession={gameSession} questions={questions} />;
-      case 'leaderboard':
-        return (
-          <div className="text-center mt-48"> 
-            <h2 className="text-5xl font-display font-bold text-primary-light mb-8">
-              {t('leaderboard.title')}
-            </h2>
-            <Leaderboard gameId={gameSession.id} />
-          </div>
-        );
-      case 'finished':
-        return (
-          <div className="text-center mt-48">
-            <FinalLeaderboard gameId={gameSession.id} />
-          </div>
-        );
-      default:
-        return (
-          <div className="text-center text-neutral-100 mt-48"> 
-            <p className="text-2xl">{t('error.unknownState')}: {gameSession.state}</p>
-          </div>
-        );
-    }
-  };
+  // The renderGameState function has been removed.
 
   return (
     // Apply theme and custom styles to the main game page
@@ -102,7 +66,11 @@ export default function StreamPage() {
     >
       <StreamHeader gamePin={gameSession.gamePin || gameId} />
       <div className="w-full max-w-6xl">
-        {renderGameState()}
+        {/* The switch statement is replaced with this single component */}
+        <StreamStateRenderer
+          gameSession={gameSession}
+          questions={questions}
+        />
       </div>
     </div>
   );

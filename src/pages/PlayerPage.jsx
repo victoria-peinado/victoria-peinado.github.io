@@ -1,55 +1,44 @@
 // src/pages/PlayerPage.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
-// --- IMPORT HOOKS ---
+// --- IMPORT HOOKS (NOW CLEAN!) ---
 import { useGameSession } from '../hooks/useGameSession';
 import { useQuestionBank } from '../hooks/useQuestionBank';
-import { useAuth } from '../contexts/AuthContext';
-import { usePlayerAuth } from '../hooks/usePlayerAuth';
-import { usePlayerJoin } from '../hooks/usePlayerJoin';
-import { usePlayerState } from '../hooks/usePlayerState';
-import { usePlayerActions } from '../hooks/usePlayerActions';
 import { useAudio } from '../hooks/useAudio';
+import { usePlayerSession } from '../hooks/player/usePlayerSession'; // <-- THE NEW HOOK
 
 // --- IMPORT COMPONENTS ---
 import PlayerJoinForm from '../components/player/PlayerJoinForm';
-import PlayerWaitingView from '../components/player/PlayerWaitingView';
-import PlayerQuestionView from '../components/player/PlayerQuestionView';
-import PlayerAnswerView from '../components/player/PlayerAnswerView';
-import Leaderboard from '../components/common/Leaderboard';
-import FinalLeaderboard from '../components/common/FinalLeaderboard'; 
 import LoadingScreen from '../components/common/LoadingScreen';
 import ErrorScreen from '../components/common/ErrorScreen';
 import PlayerNavbar from '../components/layout/PlayerNavbar';
 import AdminMessageOverlay from '../components/common/AdminMessageOverlay';
 import FullScreenCenter from '../components/layout/FullScreenCenter';
+import PlayerStateRenderer from '../components/player/PlayerStateRenderer';
 
 export default function PlayerPage() {
   const { gameId } = useParams();
   const { t } = useTranslation();
-  const { currentUser, loading: authLoading } = useAuth();
   const { setMusic } = useAudio();
   
-  const [message, setMessage] = useState({ text: '', type: '' });
-  const handleMessage = (text, type, duration = 3000) => {
-    setMessage({ text, type });
-    setTimeout(() => setMessage({ text: '', type: '' }), duration);
-  };
-
+  // Data hooks remain
   const { gameSession, loading: gameLoading, error: gameError } = useGameSession(gameId);
   const { questions } = useQuestionBank(gameSession?.questionBankId);
 
-  const { playerId, setPlayerId, nickname, setNickname, isVerifying } = usePlayerAuth(gameId, currentUser, authLoading);
-  const { isJoining, handleJoinGame } = usePlayerJoin(gameSession, currentUser, (uid, joinedNickname) => {
-    setPlayerId(uid);
-    setNickname(joinedNickname);
-  }, handleMessage);
-  
-  const { adminMessage, setAdminMessage } = usePlayerState(gameId, playerId, gameSession);
-  const { selectedAnswer, hasAnswered, isSubmitting, handleAnswerSubmit } = usePlayerActions(gameId, playerId, gameSession, handleMessage);
+  // All player logic is now in this one hook
+  const {
+    isLoading: playerLoading,
+    playerId,
+    adminMessage,
+    setAdminMessage,
+    message,
+    joinForm,
+    rendererProps,
+  } = usePlayerSession(gameSession);
 
+  // Music effect remains
   useEffect(() => {
     if (!gameSession) return;
     switch (gameSession.state) {
@@ -61,35 +50,34 @@ export default function PlayerPage() {
     }
   }, [gameSession?.state, setMusic]);
 
-  if (authLoading || gameLoading || isVerifying) {
+  // Combined loading state
+  if (playerLoading || gameLoading) {
     return <LoadingScreen message={t('loading.game')} />;
   }
   if (gameError) return <ErrorScreen message={gameError} />;
   if (!gameSession) return <ErrorScreen message={t('error.gameNotFound')} />;
 
-  // --- UPDATED THEME LOGIC ---
+  // Theme logic remains
   const theme = gameSession.theme || 'default';
   const customThemeData = gameSession.customThemeData || null;
 
-  // Define the style object to override CSS variables
-  // This now includes ALL theme variables from your picker
   const themeStyles = (theme === 'custom' && customThemeData) ? {
     '--color-primary': customThemeData.primary,
     '--color-primary-light': customThemeData.primaryLight,
     '--color-primary-dark': customThemeData.primaryDark,
     '--color-secondary': customThemeData.secondary,
     '--color-secondary-dark': customThemeData.secondaryDark,
-    '--color-text-on-primary': customThemeData.textOnPrimary, // <-- FIX 
-    '--color-accent-green': customThemeData.accentGreen,     // <-- ADDED
-    '--color-accent-blue': customThemeData.accentBlue,       // <-- ADDED
-    '--color-accent-black': customThemeData.accentBlack,     // <-- ADDED
+    '--color-text-on-primary': customThemeData.textOnPrimary,
+    '--color-accent-green': customThemeData.accentGreen,
+    '--color-accent-blue': customThemeData.accentBlue,
+    '--color-accent-black': customThemeData.accentBlack,
   } : {};
-  // --- END UPDATED THEME LOGIC ---
+  // --- END THEME LOGIC ---
 
   // --- NOT JOINED YET ---
+  // This block is now much cleaner
   if (!playerId) {
     return (
-      // Apply theme and custom styles to the join page
       <div className={`theme-${theme}`} style={themeStyles}> 
         <FullScreenCenter>
           <div className="max-w-md w-full">
@@ -99,10 +87,10 @@ export default function PlayerPage() {
               </div>
             )}
             <PlayerJoinForm
-              nickname={nickname}
-              onNicknameChange={setNickname}
-              onJoinGame={(e) => handleJoinGame(e, nickname)}
-              isJoining={isJoining}
+              nickname={joinForm.nickname}
+              onNicknameChange={joinForm.setNickname}
+              onJoinGame={(e) => joinForm.handleJoinGame(e, joinForm.nickname)}
+              isJoining={joinForm.isJoining}
             />
           </div>
         </FullScreenCenter>
@@ -111,25 +99,8 @@ export default function PlayerPage() {
   }
 
   // --- JOINED ---
-  const renderGameState = () => {
-    switch (gameSession.state) {
-      case 'waiting':
-        return <PlayerWaitingView nickname={nickname} />;
-      case 'questionactive':
-        return <PlayerQuestionView gameSession={gameSession} questions={questions} onAnswerSelect={handleAnswerSubmit} hasAnswered={hasAnswered} isSubmitting={isSubmitting} selectedAnswer={selectedAnswer} />;
-      case 'answerrevealed':
-        return <PlayerAnswerView gameSession={gameSession} questions={questions} selectedAnswer={selectedAnswer} hasAnswered={hasAnswered} />;
-      case 'leaderboard':
-        return <div className="text-center"><h2 className="text-4xl font-display text-primary-light mb-8">{t('leaderboard.title')}</h2><Leaderboard gameId={gameSession.id} /></div>;
-      case 'finished':
-        return <FinalLeaderboard gameId={gameSession.id} />;
-      default:
-        return <div className="text-center text-neutral-100"><p className="text-xl">{t('error.unknownState')}: {gameSession.state}</p></div>;
-    }
-  };
-
+  // This block is now much cleaner
   return (
-    // Apply theme and custom styles to the main game page
     <div 
       className={`theme-${theme} min-h-screen bg-neutral-900 text-neutral-100 font-body p-8`}
       style={themeStyles}
@@ -146,7 +117,13 @@ export default function PlayerPage() {
             {message.text}
           </div>
         )}
-        {renderGameState()}
+        
+        <PlayerStateRenderer
+          gameSession={gameSession}
+          questions={questions}
+          // Pass the composed props down
+          {...rendererProps}
+        />
       </div>
     </div>
   );

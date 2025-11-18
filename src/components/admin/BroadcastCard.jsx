@@ -1,30 +1,17 @@
 // src/components/admin/BroadcastCard.jsx
-import React, { useState } from 'react';
-import { sendBroadcast } from '../../services/game/gameMessaging';
+import React from 'react';
+// We no longer import services or use state here
 import { Card, CardContent, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 
-export default function BroadcastCard({ gameId, onMessage }) {
-  const [broadcastInput, setBroadcastInput] = useState('');
-  const [isSending, setIsSending] = useState(false);
-
-  const handleSendBroadcast = async (e) => {
-    e.preventDefault();
-    if (!broadcastInput.trim()) return;
-
-    setIsSending(true);
-    try {
-      await sendBroadcast(gameId, broadcastInput.trim());
-      onMessage('Broadcast sent to all players!', 'success');
-      setBroadcastInput(''); // Clear input on success
-    } catch (error) {
-      onMessage(error.message, 'error');
-    } finally {
-      setIsSending(false);
-    }
-  };
-
+export default function BroadcastCard({
+  broadcastInput,
+  setBroadcastInput,
+  isSending,
+  handleSendBroadcast,
+}) {
+  // All logic (useState, handleSendBroadcast) has been moved to useBroadcast.js
   return (
     <Card>
       <CardContent className="p-6">

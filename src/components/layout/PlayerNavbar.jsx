@@ -5,7 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { logout } from '../../services/authService';
 import { handleExitGame } from '../../services/player/playerAuth';
 import ConfirmModal from '../common/ConfirmModal';
-import VolumeControl from '../common/VolumeControl'; // 1. Import VolumeControl
+import VolumeControl from '../common/VolumeControl';
 
 export default function PlayerNavbar() {
   const [isExitModalOpen, setIsExitModalOpen] = useState(false);
@@ -17,7 +17,10 @@ export default function PlayerNavbar() {
   const { currentUser } = useAuth();
   
   const showExitGameButton = !!gameId;
-  const showLogoutButton = !!currentUser;
+
+  // --- FIX: Only show Logout if user is registered (NOT anonymous) ---
+  const showLogoutButton = currentUser && !currentUser.isAnonymous;
+  // ------------------------------------------------------------------
 
   // --- Handlers ---
 
@@ -67,14 +70,14 @@ export default function PlayerNavbar() {
           ) : (
             <Link 
               to="/" 
-              className="px-4 py-2 text-white bg-gray-700 bg-opacity-50 rounded-lg hover:bg-gray-600 transition"
+              className="px-4 py-2 text-white bg-gray-700 bg-opacity-50 rounded-lg hover:bg-gray-700 transition"
             >
               Back to Home
             </Link>
           )}
 
-          <div className="flex items-center gap-4"> {/* 2. Added items-center */}
-            <VolumeControl /> {/* 3. Add VolumeControl component here */}
+          <div className="flex items-center gap-4">
+            <VolumeControl />
             
             {showExitGameButton && (
               <button

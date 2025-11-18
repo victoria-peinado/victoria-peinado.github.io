@@ -7,7 +7,7 @@ import { useGameSession } from '../hooks/useGameSession';
 import { useQuestionBank } from '../hooks/useQuestionBank';
 
 // --- NEW HOOK ---
-import { useAdminGame } from '../hooks/useAdminGame';
+import { useAdminGame } from '../hooks/useAdminGame'; // This hook now provides EVERYTHING
 
 // --- COMPONENTS ---
 import AdminControls from '../components/admin/AdminControls';
@@ -32,27 +32,34 @@ export default function AdminGame() {
     gameSession?.questionBankId
   );
 
-  // Logic hook - all state and handlers
+  // Logic hook - This one call now returns all state and handlers
   const {
     isBusy,
-    // message, // 1. REMOVED message
-    handleMessage,
     handleTimerExpire,
     handleShowQuestion,
     handleShowLeaderboard,
     handleEndGame,
+    // New props from useBroadcast
+    broadcastInput,
+    setBroadcastInput,
+    isSending,
+    handleSendBroadcast,
+    // New props from useShareLink
+    copied,
+    shareUrl,
+    handleCopyLink,
   } = useAdminGame(gameSession, gameId, questions);
 
   // Loading and Error States
   if (gameLoading || questionsLoading) {
     return <LoadingScreen />;
   }
-
+  // ... (Error handling is unchanged) ...
   if (error) {
     return <ErrorScreen message={error} />;
   }
-
   if (!gameSession) {
+    // ... (Game not found is unchanged) ...
     return (
       <div className="text-center py-12">
         <h1 className="text-2xl font-bold text-secondary mb-4">
@@ -70,7 +77,7 @@ export default function AdminGame() {
 
   return (
     <div>
-      {/* Header */}
+      {/* Header (Unchanged) */}
       <div className="mb-6 flex justify-between items-center">
         <div>
           <h1 className="text-4xl font-display font-bold">
@@ -88,11 +95,9 @@ export default function AdminGame() {
         </Link>
       </div>
 
-      {/* 2. REMOVED entire message.text block */}
-
       {/* Main Grid Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column - Controls & Status */}
+        {/* Left Column - Controls & Status (Unchanged) */}
         <div className="lg:col-span-2 space-y-6">
           {/* Game Controls */}
           <Card>
@@ -109,7 +114,7 @@ export default function AdminGame() {
             </CardContent>
           </Card>
 
-          {/* Game Status */}
+          {/* Game Status (Unchanged) */}
           <Card>
             <CardContent className="p-6">
               <CardTitle className="mb-4">Current Status</CardTitle>
@@ -129,14 +134,24 @@ export default function AdminGame() {
             </CardContent>
           </Card>
 
-          {/* Share & Broadcast Cards */}
+          {/* Share & Broadcast Cards (NOW DUMB) */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <ShareGameCard gamePin={gameSession.gamePin} gameId={gameId} />
-            <BroadcastCard gameId={gameId} onMessage={handleMessage} />
+            <ShareGameCard
+              gamePin={gameSession.gamePin}
+              copied={copied}
+              shareUrl={shareUrl}
+              handleCopyLink={handleCopyLink}
+            />
+            <BroadcastCard
+              broadcastInput={broadcastInput}
+              setBroadcastInput={setBroadcastInput}
+              isSending={isSending}
+              handleSendBroadcast={handleSendBroadcast}
+            />
           </div>
         </div>
 
-        {/* Right Column - Live Player List */}
+        {/* Right Column - Live Player List (Unchanged) */}
         <div className="lg:col-span-1">
           <Card className="sticky top-6">
             <CardContent className="p-6">

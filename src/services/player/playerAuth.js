@@ -17,9 +17,10 @@ import {
  * @param {string} gameId - The ID of the game to join.
  * @param {string} userId - The authenticated user's UID.
  * @param {string} nickname - The player's chosen nickname.
+ * @param {boolean} isAnonymous - Whether the user is an anonymous guest.
  * @returns {string} The player's UID.
  */
-export const joinGame = async (gameId, userId, nickname) => {
+export const joinGame = async (gameId, userId, nickname, isAnonymous) => {
   try {
     const trimmedNickname = nickname.trim();
     const playersRef = collection(db, `gameSessions/${gameId}/players`);
@@ -33,7 +34,7 @@ export const joinGame = async (gameId, userId, nickname) => {
       if (playerData.hasExited === true) {
         throw new Error('You cannot rejoin a game you have exited.');
       }
-      if (playerData.isKicked === true) {
+      if (playerData.isKKicked === true) {
         throw new Error('You cannot rejoin a game you have been kicked from.');
       }
 
@@ -68,6 +69,9 @@ export const joinGame = async (gameId, userId, nickname) => {
       // SPRINT 14: Add fields for in-game stat tracking
       questionsCorrect: 0,
       totalAnswerTimeMs: 0,
+      // --- SPRINT 16: ADDED ---
+      isAnonymous: isAnonymous,
+      // --- END SPRINT 16 ---
     });
     // No { merge: true } needed, since this is a brand new doc.
 
