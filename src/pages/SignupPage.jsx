@@ -1,13 +1,12 @@
 // src/pages/SignupPage.jsx
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { useTranslation } from 'react-i18next'; // 1. Import
+import { useTranslation } from 'react-i18next';
 import { signup } from '../services/authService';
 import { db } from '../firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import { useAuthForm } from '../hooks/useAuthForm';
 
-// 2. Import UI Kit
 import FullScreenCenter from '../components/layout/FullScreenCenter';
 import { Card, CardContent, CardTitle } from '../components/ui/Card';
 import { Label } from '../components/ui/Label';
@@ -15,39 +14,47 @@ import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
 
 export default function SignupPage() {
-  const { t } = useTranslation(); // 3. Initialize
+  const { t } = useTranslation();
   const {
     email, setEmail, password, setPassword,
     confirmPassword, setConfirmPassword, error, setError,
-    loading, setLoading, navigate
+    loading, setLoading, 
+    // 1. Destructure the migration handler
+    handlePostSignup 
   } = useAuthForm();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (password !== confirmPassword) {
-      return setError(t('signup.errorMatch')); // i18n key
+      return setError(t('signup.errorMatch'));
     }
     setError('');
     setLoading(true);
     try {
+      // 2. Create User
       const userCredential = await signup(email, password);
       const user = userCredential.user;
+
+      // 3. Create 'users' document (Role/Admin data)
       const userDocRef = doc(db, 'users', user.uid);
       await setDoc(userDocRef, {
         email: user.email,
         isAdmin: false,
         createdAt: new Date(),
       });
-      navigate('/');
+      
+      // 4. FIX: Call the migration handler instead of navigating manually
+      // This function checks the URL for 'anonId' and moves the stats over.
+      await handlePostSignup(user);
+
     } catch (err) {
-      setError(t('signup.errorFailed')); // i18n key
+      setError(t('signup.errorFailed'));
       console.error(err);
+      setLoading(false); // Only stop loading on error (success navigates away)
     }
-    setLoading(false);
   };
 
   return (
-    // 4. Use new Layout and Components
     <FullScreenCenter>
       <Card>
         <CardContent className="p-8">

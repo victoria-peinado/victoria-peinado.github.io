@@ -27,7 +27,13 @@ export const createNewGame = async (adminId, questionBankId, gameName, themeOrDa
     const gamePin = gameSessionId.substring(0, 5);
     const gamePinUpper = gamePin.toUpperCase();
 
-    // --- NEW LOGIC FOR THEMES ---
+    // --- NEW: TTL (Auto-Delete) Logic ---
+    // Create a date object for 48 hours from now.
+    // Firestore will use this to automatically delete the game session.
+    const expireAt = new Date();
+    expireAt.setHours(expireAt.getHours() + 48); 
+    // ------------------------------------
+
     let gameData = {
       adminId: adminId,
       questionBankId: questionBankId,
@@ -38,6 +44,8 @@ export const createNewGame = async (adminId, questionBankId, gameName, themeOrDa
       currentQuestionIndex: 0,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
+      // Add the expiration timestamp to the document
+      expireAt: expireAt 
     };
 
     if (typeof themeOrData === 'object' && themeOrData !== null) {
@@ -48,7 +56,6 @@ export const createNewGame = async (adminId, questionBankId, gameName, themeOrDa
       // It's a theme name string (e.g., "flare", "default")
       gameData.theme = themeOrData || 'default';
     }
-    // --- END NEW LOGIC ---
 
     await setDoc(gameSessionRef, gameData);
 
