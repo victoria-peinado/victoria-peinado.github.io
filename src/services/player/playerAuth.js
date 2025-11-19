@@ -14,11 +14,6 @@ import {
 
 /**
  * Creates or updates a player document in Firestore after checking for uniqueness.
- * @param {string} gameId - The ID of the game to join.
- * @param {string} userId - The authenticated user's UID.
- * @param {string} nickname - The player's chosen nickname.
- * @param {boolean} isAnonymous - Whether the user is an anonymous guest.
- * @returns {string} The player's UID.
  */
 export const joinGame = async (gameId, userId, nickname, isAnonymous) => {
   try {
@@ -38,17 +33,12 @@ export const joinGame = async (gameId, userId, nickname, isAnonymous) => {
         throw new Error('You cannot rejoin a game you have been kicked from.');
       }
 
-      // If they exist and haven't exited or been kicked, they are *already in*.
-      // This join attempt is from a second device or an unnecessary form resubmit.
-      // The "page refresh" logic is handled by localStorage in PlayerPage.jsx,
-      // so we can safely block this.
       throw new Error(
         "You are already in this game. If you're on the same device, refresh the page."
       );
     }
 
     // --- 2. Check if the NICKNAME is taken by SOMEONE ELSE. ---
-    // (We know this user is new, so any match is guaranteed to be another player)
     const q = query(playersRef, where('nickname', '==', trimmedNickname));
     const nicknameSnapshot = await getDocs(q);
 
@@ -60,36 +50,31 @@ export const joinGame = async (gameId, userId, nickname, isAnonymous) => {
 
     // --- 3. If all checks pass, create the new player document. ---
     await setDoc(playerRef, {
-      userId: userId, // <-- SPRINT 14: Added to link to permanent profile
+      // CRITICAL: This field determines if the profile service can update stats
+      userId: userId, 
       nickname: trimmedNickname,
       score: 0,
       joinedAt: serverTimestamp(),
       hasExited: false,
       isKicked: false,
-      // SPRINT 14: Add fields for in-game stat tracking
       questionsCorrect: 0,
       totalAnswerTimeMs: 0,
-      // --- SPRINT 16: ADDED ---
-      isAnonymous: isAnonymous,
-      // --- END SPRINT 16 ---
+      isAnonymous: isAnonymous, // Added Sprint 16
     });
-    // No { merge: true } needed, since this is a brand new doc.
 
     console.log('Player document created with userId');
     return userId;
   } catch (error) {
     console.error('Error joining game:', error);
-    throw error; // Re-throw to preserve the error message
+    throw error;
   }
 };
 
 /**
  * Flags a player as having exited the game.
- * @param {string} gameId - The ID of the game.
- * @param {string} playerId - The authenticated user's UID.
  */
 export const handleExitGame = async (gameId, playerId) => {
-  if (!gameId || !playerId) return; // Safety check
+  if (!gameId || !playerId) return;
 
   try {
     const playerRef = doc(db, `gameSessions/${gameId}/players/${playerId}`);
