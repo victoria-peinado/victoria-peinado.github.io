@@ -13,6 +13,7 @@ import {
   where,
   orderBy,
   startAfter,
+  limit
 } from '../../firebase';
 
 /**
@@ -105,53 +106,62 @@ export const updateProfileStats = async (gameId, gameName) => {
       const player = playerDoc.data();
       const playerId = playerDoc.id;
 
-      // --- SPRINT 16 FIX: Explicitly skip anonymous players ---
-      if (player.isAnonymous === true) {
+      // --- BUG FIX 1: More robust Anonymous check ---
+      // Checks for boolean true, string "true", or just truthy.
+      if (player.isAnonymous === true || player.isAnonymous === 'true' || player.isAnonymous) {
         console.log(`Skipping anonymous player ${playerId}.`);
         continue;
       }
 
-      // --- SAFETY CHECK: Ensure userId exists ---
-      if (!player.userId) {
-        console.warn(`Skipping registered player ${playerId} (no userId found in player doc).`);
+      // --- BUG FIX 2: Robust userId Validation ---
+      // Prevents the loop from crashing if a player has no userId or invalid userId
+      if (!player.userId || typeof player.userId !== 'string') {
+        console.warn(`Skipping registered player ${playerId} - Invalid or missing userId:`, player.userId);
         continue;
       }
 
-      const rank =
-        sortedLeaderboard.findIndex((p) => p.id === playerId) + 1;
+      try {
+        const rank = sortedLeaderboard.findIndex((p) => p.id === playerId) + 1;
 
-      const avgAnswerTime =
-        player.questionsCorrect > 0
-          ? player.totalAnswerTimeMs / player.questionsCorrect
-          : 0;
+        const avgAnswerTime =
+          player.questionsCorrect > 0
+            ? player.totalAnswerTimeMs / player.questionsCorrect
+            : 0;
 
-      // --- A. Create the Match History Document ---
-      const historyDocRef = doc(
-        db,
-        `profiles/${player.userId}/matchHistory/${gameId}`
-      );
-      const matchHistoryData = {
-        gameId: gameId,
-        gameName: gameName || 'Trivia Game',
-        gameDate: gameDate,
-        finalRank: rank,
-        finalScore: player.score,
-        questionsCorrect: player.questionsCorrect,
-        avgAnswerTime: avgAnswerTime,
-      };
-      batch.set(historyDocRef, matchHistoryData);
+        // --- A. Create the Match History Document ---
+        // Utilizing the validated player.userId
+        const historyDocRef = doc(
+          db,
+          `profiles/${player.userId}/matchHistory/${gameId}`
+        );
+        
+        const matchHistoryData = {
+          gameId: gameId,
+          gameName: gameName || 'Trivia Game',
+          gameDate: gameDate,
+          finalRank: rank,
+          finalScore: player.score,
+          questionsCorrect: player.questionsCorrect,
+          avgAnswerTime: avgAnswerTime,
+        };
+        batch.set(historyDocRef, matchHistoryData);
 
-      // --- B. Update the Main Profile Document ---
-      const profileRef = doc(db, `profiles/${player.userId}`);
-      const profileStatsUpdate = {
-        stats: {
-          gamesPlayed: increment(1),
-          totalQuestionsCorrect: increment(player.questionsCorrect || 0),
-          totalAnswerTimeMs: increment(player.totalAnswerTimeMs || 0),
-        }
-      };
+        // --- B. Update the Main Profile Document ---
+        const profileRef = doc(db, `profiles/${player.userId}`);
+        const profileStatsUpdate = {
+          stats: {
+            gamesPlayed: increment(1),
+            totalQuestionsCorrect: increment(player.questionsCorrect || 0),
+            totalAnswerTimeMs: increment(player.totalAnswerTimeMs || 0),
+          }
+        };
 
-      batch.set(profileRef, profileStatsUpdate, { merge: true });
+        batch.set(profileRef, profileStatsUpdate, { merge: true });
+
+      } catch (err) {
+         // Catch individual errors so one bad player record doesn't fail the whole batch
+         console.error(`Error processing update for player ${playerId}:`, err);
+      }
     }
 
     // 4. Commit all updates atomically
@@ -160,7 +170,7 @@ export const updateProfileStats = async (gameId, gameName) => {
       `Successfully updated profiles for valid registered players.`
     );
   } catch (error) {
-    console.error('Error updating profile stats:', error);
+    console.error('Error updating profile stats (Batch Failed):', error);
   }
 };
 

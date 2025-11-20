@@ -6,7 +6,8 @@ import {
   writeBatch,
   serverTimestamp,
   setDoc,
-  deleteDoc,
+  query, //
+  where, //
   getDoc,
 } from 'firebase/firestore';
 import { db } from '../../firebase';
@@ -36,14 +37,20 @@ export async function createNewBank(adminId, bankName) {
 }
 
 /**
- * Fetches all question banks for an admin
- * @param {string} adminId - The admin's user ID (optional for now)
+ * Fetches all question banks for a specific admin.
+ * FIX: Now restricts results to the ownerId.
+ * @param {string} adminId - The admin's user ID
  * @returns {Promise<Array>} - Array of question banks
  */
 export async function getQuestionBanks(adminId) {
+  if (!adminId) return [];
+  
   try {
     const banksRef = collection(db, 'questionBanks');
-    const snapshot = await getDocs(banksRef);
+    // FIX: Added query to filter by ownerId
+    const q = query(banksRef, where('ownerId', '==', adminId));
+    
+    const snapshot = await getDocs(q);
     return snapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
