@@ -1,0 +1,1 @@
+import{j as a}from"./index-Di-Zw_TF.js";function r({htmlFor:t,children:e,className:o=""}){return a.jsx("label",{htmlFor:t,className:`block text-neutral-100 font-bold mb-2 ${o}`,children:e})}export{r as L};
